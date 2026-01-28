@@ -1,0 +1,48 @@
+
+{
+  "POST /api/auth/signup": {
+    "success": {
+      "status": 201,
+      "body": {
+        "message": "User registered successfully",
+        "user": {
+          "id": "u-123456",
+          "name": "Alex Student",
+          "email": "alex@example.com",
+          "created_at": "2024-05-20T12:00:00Z"
+        },
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+      }
+    },
+    "failure_duplicate": {
+      "status": 409,
+      "body": {
+        "error": "An account with this email already exists"
+      }
+    },
+    "failure_missing": {
+      "status": 400,
+      "body": {
+        "error": "Full Name, Email, and Password are required"
+      }
+    }
+  },
+  "POST /api/quiz/generate/:topic_id": {
+    "success": {
+      "id": "q-123",
+      "topic_id": "t-456",
+      "created_at": "2024-05-20T12:00:00Z",
+      "questions": [
+        {
+          "id": "ques-1",
+          "quiz_id": "q-123",
+          "text": "What is the primary goal of reinforcement learning?",
+          "options": ["Predicting labels", "Maximizing cumulative reward", "Clustering data", "Dimensionality reduction"],
+          "correct_answer": 1,
+          "difficulty": "medium",
+          "concept_tag": "Fundamentals"
+        }
+      ]
+    }
+  }
+}

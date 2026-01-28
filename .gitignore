@@ -1,0 +1,100 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ==============================
+# Python Backend (Flask)
+# ==============================
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Environment variables
+.env
+
+# Flask instance folder
+instance/
+
+# Migrations cache
+migrations/__pycache__/
+
+# Logs
+*.log
+
+# Certificates generated PDFs
+backend/certificates/generated/
+
+# ==============================
+# Node Frontend (React)
+# ==============================
+
+# Node modules
+node_modules/
+
+# React build output
+dist/
+build/
+
+# Vite cache
+.vite/
+
+# npm/yarn debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ==============================
+# OS Files
+# ==============================
+
+.DS_Store
+Thumbs.db
+
+# ==============================
+# IDE Files
+# ==============================
+
+.vscode/
+.idea/
+
+# ==============================
+# Database
+# ==============================
+
+*.sqlite3
+*.db
+
+# ==============================
+# Secrets
+# ==============================
+
+*.pem
+*.key
