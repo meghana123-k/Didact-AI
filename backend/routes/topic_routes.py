@@ -25,8 +25,9 @@ if not GEMINI_API_KEY:
 gemini_client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
 
 # ===========================
-# ✅ HuggingFace Fallback
+# ✅ HuggingFace Fallback (lightweight, safe defaults)
 # ===========================
+# Use a smaller FLAN-T5 variant to reduce memory pressure on local machines.
 HF_MODEL_NAME = os.getenv("HF_SUMMARY_MODEL", "google/flan-t5-large")
 _hf_summarizer = None
 
@@ -180,20 +181,25 @@ def summarize_topic():
 
     if summary is None:
         # Either no Gemini client or quota exhausted → use HuggingFace locally
+        # Truncate aggressively for HF (models have token limits)
         try:
-            prompt = build_prompt(extracted_text[:8000], mode)
+            # Truncate to ~1500 chars (~300–400 tokens) to stay well under limits
+            truncated_text = extracted_text[:1500]
+            prompt = build_prompt(truncated_text, mode)
             hf_summarizer = get_hf_summarizer()
             raw = hf_summarizer(
                 prompt,
-                max_length=4096,
-                min_length=512,
+                max_length=512,   # output length cap
+                min_length=200,
                 do_sample=False,
+                truncation=True,  # let transformers truncate if still too long
             )
             summary_text = raw[0]["generated_text"].strip()
             summary = normalize_to_word_range(summary_text)
         except Exception as e:
             # If this was a Gemini quota issue, expose that clearly
             if quota_error:
+                print(f"HuggingFace fallback failed after Gemini quota error: {e}")
                 return jsonify({
                     "error": "Gemini quota exhausted and local fallback failed",
                     "status": 500

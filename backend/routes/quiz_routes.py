@@ -28,7 +28,7 @@ if not GEMINI_API_KEY:
 gemini_client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
 
 # ======================
-# ✅ HuggingFace Fallback
+# ✅ HuggingFace Fallback (lightweight, safe defaults)
 # ======================
 HF_QUIZ_MODEL_NAME = os.getenv("HF_QUIZ_MODEL", "google/flan-t5-large")
 _hf_quiz_generator = None
@@ -170,12 +170,16 @@ def generate_quiz(topic_id):
 
     if questions_data is None:
         # Gemini unavailable or quota exceeded → use HuggingFace fallback
+        # Truncate aggressively for HF (models have token limits)
         try:
+            # Truncate to ~1500 chars to stay under token limits
+            truncated_summary = topic.summary[:1500]
             hf_generator = get_hf_quiz_generator()
             result = hf_generator(
-                quiz_prompt(topic.summary[:8000]),
-                max_length=4096,
+                quiz_prompt(truncated_summary),
+                max_length=1024,  # HF models have shorter output limits
                 do_sample=False,
+                truncation=True,  # Enable truncation to handle long inputs
             )
             raw_text = result[0]["generated_text"]
             questions_data = extract_json(raw_text)
@@ -187,6 +191,7 @@ def generate_quiz(topic_id):
                 return jsonify({"error": msg, "status": 500}), 500
         except Exception as e:
             if quota_error:
+                print(f"HuggingFace quiz fallback failed after Gemini quota error: {e}")
                 return jsonify({
                     "error": "Gemini quiz quota exhausted and local fallback failed",
                     "status": 500
