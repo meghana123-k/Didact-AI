@@ -72,13 +72,9 @@ def extract_text(file):
 # ✅ Prompt Builder
 # ===========================
 def build_prompt(text, mode):
-    """
-    Build an instruction-style prompt for Gemini.
-    Enforces pedagogical modes required by the product spec.
-    """
     base = (
-        "You are DidAct AI, a pedagogy-focused tutor. "
-        "Write a clear, coherent explanation between 1500 and 2500 words. "
+        "You are DidAct AI, a pedagogy-focused tutor.\n"
+        "Write a clear, coherent explanation between 1500 and 2500 words.\n"
         "Use short paragraphs and simple language where possible.\n\n"
     )
 
@@ -87,28 +83,42 @@ def build_prompt(text, mode):
             "Mode: BASIC.\n"
             "- Explain the topic as if teaching a child.\n"
             "- Use very friendly tone and simple language.\n"
-            "- Include multiple real-world, relatable examples.\n"
+            "- Include multiple real-world, relatable examples.\n\n"
         )
     elif mode == "detailed":
         mode_instr = (
             "Mode: DETAILED.\n"
             "- Provide a multi-paragraph deep academic explanation.\n"
-            "- Include definitions, subheadings, and cause-effect reasoning.\n"
+            "- Include definitions, subheadings, and cause-effect reasoning.\n\n"
         )
     else:
         mode_instr = (
             "Mode: OVERVIEW.\n"
             "- Focus on key concepts and how they relate to each other.\n"
-            "- Describe conceptual relationships and big-picture structure.\n"
+            "- Describe conceptual relationships and big-picture structure.\n\n"
         )
+
+    markdown_rules = (
+        "Output the explanation in WELL-STRUCTURED MARKDOWN.\n"
+        "Rules:\n"
+        "- Use # for the title\n"
+        "- Use ## for major sections\n"
+        "- Use ### for sub-sections\n"
+        "- Use bullet points and tables where appropriate\n"
+        "- Do NOT include JSON\n"
+        "- Do NOT include explanations outside the content\n"
+        "- Do NOT wrap the output in markdown code fences\n\n"
+    )
 
     return (
         base
         + mode_instr
-        + "\nSource material:\n"
+        + "Source material:\n"
         + text
-        + "\n\nNow produce only the final explanation text."
+        + "\n\n"
+        + markdown_rules
     )
+
 
 
 def normalize_to_word_range(text: str, min_words: int = 1500, max_words: int = 2500) -> str:
@@ -165,7 +175,7 @@ def summarize_topic():
         try:
             prompt = build_prompt(extracted_text[:8000], mode)
             response = gemini_client.models.generate_content(
-                model="gemini-2.0-flash",
+                model="gemini-flash-latest",
                 contents=prompt,
             )
             summary_text = (response.text or "").strip()

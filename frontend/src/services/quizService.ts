@@ -8,19 +8,28 @@ export const quizService = {
   // POST /api/quiz/generate/<topic_id>
   // ===============================
   async generate(topicId: string, token: string): Promise<Quiz> {
-    const response = await fetch(`${API_BASE_URL}/generate/${topicId}`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    try {
+      const response = await fetch(`${API_BASE_URL}/generate/${topicId}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || "Quiz generation failed");
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Quiz generation failed");
+      }
+
+      return response.json();
+    } catch (err: any) {
+      if (err instanceof TypeError && err.message.includes("Failed to fetch")) {
+        throw new Error(
+          "Backend Unreachable. Ensure Flask is running on http://127.0.0.1:5001",
+        );
+      }
+      throw err;
     }
-
-    return response.json();
   },
 
   // ===============================

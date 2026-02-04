@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { topicService } from "../services/topicService";
 import { Topic, User } from "../types";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface TopicUploadProps {
   user: User;
@@ -122,11 +124,16 @@ const TopicUpload: React.FC<TopicUploadProps> = ({ user }) => {
           {t.title} ({t.mode})
         </button>
       ))}
-
       {selectedTopic && (
-        <div className="mt-6 border p-4">
-          <h2 className="text-xl font-bold">{selectedTopic.title}</h2>
-          <p className="mt-2 whitespace-pre-wrap">{selectedTopic.summary}</p>
+        <div className="mt-6 border p-4 rounded">
+          <h2 className="text-xl font-bold mb-4">{selectedTopic.title}</h2>
+
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            className="prose max-w-none"
+          >
+            {selectedTopic.summary || ""}
+          </ReactMarkdown>
         </div>
       )}
     </div>

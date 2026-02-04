@@ -81,52 +81,96 @@ Topic summary:
 """
 
 
+def simple_fallback_prompt(summary_text: str) -> str:
+    """
+    Simplified prompt for HuggingFace fallback model.
+    Generates 10-15 questions only to fit within token limits.
+    """
+    return f"""Generate 10 multiple choice questions as JSON.
+
+[
+  {{"text": "question?", "options": ["A", "B", "C", "D"], "correct_answer": 0, "difficulty": "easy", "concept_tag": "concept"}}
+]
+
+Topic: {summary_text[:500]}
+"""
+
+
 def extract_json(text: str):
     """
     Extract and parse the first JSON array from the model output.
+    Includes repair logic for common formatting issues.
     """
     try:
         start = text.index("[")
         end = text.rindex("]") + 1
-        return json.loads(text[start:end])
-    except Exception:
+        json_str = text[start:end]
+        return json.loads(json_str)
+    except json.JSONDecodeError as e:
+        print(f"JSON Parse Error: {e}")
+        print(f"Attempted JSON string (first 200 chars): {text[start:end][:200] if 'start' in locals() else 'N/A'}")
+        
+        # Try JSON repair: remove trailing commas
+        try:
+            if 'start' in locals():
+                json_str = text[start:end]
+                json_str = json_str.rstrip(',]') + ']'  # Remove trailing comma before ]
+                return json.loads(json_str)
+        except:
+            pass
+        
+        return None
+    except Exception as e:
+        print(f"Extract JSON Error: {e}")
         return None
 
 
 def validate_questions(questions_data):
     """
-    Validate that we have exactly 30 questions with the correct structure
-    and difficulty distribution.
+    Validate questions with flexible requirements for fallback model.
+    Minimum: 10 questions, Maximum: 30 questions.
+    If less than 30, we accept it rather than fail completely.
     """
-    if not isinstance(questions_data, list) or len(questions_data) != 30:
-        return False, "Model must return exactly 30 questions."
+    if not isinstance(questions_data, list):
+        return False, "Questions must be a list."
+    
+    # Accept 10-30 questions (flexible for fallback models)
+    if len(questions_data) < 10:
+        return False, "Minimum 10 questions required."
+    if len(questions_data) > 30:
+        questions_data = questions_data[:30]  # Trim to 30
 
     counts = {"easy": 0, "medium": 0, "hard": 0}
 
     for idx, q in enumerate(questions_data):
         try:
-            text = q["text"]
-            options = q["options"]
-            correct_answer = int(q["correct_answer"])
-            difficulty = q["difficulty"].lower()
-            concept_tag = q["concept_tag"]
+            text = q.get("text", "").strip()
+            options = q.get("options", [])
+            correct_answer = int(q.get("correct_answer", -1))
+            difficulty = str(q.get("difficulty", "medium")).lower().strip()
+            concept_tag = q.get("concept_tag", "general")
         except Exception:
             return False, f"Invalid question structure at index {idx}."
 
+        if not text:
+            return False, f"Question {idx + 1} has empty text."
+        
         if not isinstance(options, list) or len(options) != 4:
             return False, f"Question {idx + 1} must have exactly 4 options."
+        
         if correct_answer < 0 or correct_answer > 3:
             return False, f"Question {idx + 1} has invalid correct_answer index."
+        
         if difficulty not in counts:
-            return False, f"Question {idx + 1} has invalid difficulty '{difficulty}'."
-
+            difficulty = "medium"  # Default to medium if invalid
+            q["difficulty"] = difficulty
+        
         counts[difficulty] += 1
 
-    if counts["easy"] != 10 or counts["medium"] != 10 or counts["hard"] != 10:
-        return (
-            False,
-            "Difficulty distribution must be exactly 10 easy, 10 medium, 10 hard.",
-        )
+    # For fallback model, we're lenient on distribution
+    # Just ensure we have at least some variety
+    if counts["easy"] == 0 and counts["medium"] == 0:
+        return False, "Must have at least some easy or medium questions."
 
     return True, None
 
@@ -149,7 +193,7 @@ def generate_quiz(topic_id):
     try:
         if gemini_client:
             result = gemini_client.models.generate_content(
-                model="gemini-2.0-flash",
+                model="gemini-flash-latest",
                 contents=quiz_prompt(topic.summary[:8000]),
             )
             raw_text = (result.text or "").strip()
@@ -170,25 +214,28 @@ def generate_quiz(topic_id):
 
     if questions_data is None:
         # Gemini unavailable or quota exceeded → use HuggingFace fallback
-        # Truncate aggressively for HF (models have token limits)
         try:
-            # Truncate to ~1500 chars to stay under token limits
-            truncated_summary = topic.summary[:1500]
+            # Use simplified prompt for fallback model
+            truncated_summary = topic.summary[:500]
             hf_generator = get_hf_quiz_generator()
             result = hf_generator(
-                quiz_prompt(truncated_summary),
-                max_length=1024,  # HF models have shorter output limits
+                simple_fallback_prompt(truncated_summary),
+                max_length=1024,  # Reduced but sufficient for simplified prompt
+                min_length=200,
                 do_sample=False,
-                truncation=True,  # Enable truncation to handle long inputs
+                truncation=True,
             )
             raw_text = result[0]["generated_text"]
+            print(f"HuggingFace fallback raw output (first 500 chars): {raw_text[:500]}")
             questions_data = extract_json(raw_text)
+            
             if not questions_data:
-                return jsonify({"error": "Fallback model returned invalid JSON", "status": 500}), 500
+                print(f"Failed to extract JSON from HuggingFace. Full output:\n{raw_text}")
+                return jsonify({"error": "Fallback model returned invalid JSON. Full output:\n" + raw_text[:500], "status": 500}), 500
 
             ok, msg = validate_questions(questions_data)
             if not ok:
-                return jsonify({"error": msg, "status": 500}), 500
+                return jsonify({"error": f"Validation failed: {msg}", "status": 500}), 500
         except Exception as e:
             if quota_error:
                 print(f"HuggingFace quiz fallback failed after Gemini quota error: {e}")
@@ -196,7 +243,8 @@ def generate_quiz(topic_id):
                     "error": "Gemini quiz quota exhausted and local fallback failed",
                     "status": 500
                 }), 500
-            return jsonify({"error": str(e), "status": 500}), 500
+            print(f"HuggingFace fallback exception: {e}")
+            return jsonify({"error": f"Fallback generation failed: {str(e)}", "status": 500}), 500
 
     try:
         quiz = Quiz(topic_id=topic.id)

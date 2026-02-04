@@ -9,11 +9,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@google/genai": "^1.38.0",
+    "axios": "^1.6.7",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
+    "react-markdown": "^10.1.0",
     "recharts": "^3.7.0",
-    "axios": "^1.6.7",
-    "@google/genai": "^1.38.0"
+    "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
