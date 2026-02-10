@@ -189,7 +189,7 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ user }) => {
               </div>
             ))}
             <p className="text-xs text-slate-400 mt-3">
-              ... and 25 more questions
+              ... and 10 more questions
             </p>
           </div>
         </div>

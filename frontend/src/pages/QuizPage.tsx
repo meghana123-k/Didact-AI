@@ -117,7 +117,7 @@ const QuizPage: React.FC<QuizPageProps> = ({ user }) => {
         </h1>
 
         <p className="text-slate-500 mt-2">
-          Select a saved topic → Backend generates a 30-question quiz.
+          Select a saved topic → Backend generates a 15-question quiz.
         </p>
 
         {error && (
@@ -153,7 +153,7 @@ const QuizPage: React.FC<QuizPageProps> = ({ user }) => {
       {/* Quiz Preview */}
       {currentQuiz && (
         <div className="bg-white p-8 rounded-3xl border shadow">
-          <h2 className="text-xl font-bold mb-3">Quiz Ready (30 Questions)</h2>
+          <h2 className="text-xl font-bold mb-3">Quiz Ready (15 Questions)</h2>
 
           <button
             onClick={() => setIsTakingQuiz(true)}

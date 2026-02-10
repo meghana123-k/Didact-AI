@@ -51,7 +51,7 @@ def quiz_prompt(summary_text: str) -> str:
     return f"""
 You are DidAct AI Quiz Generator.
 
-Generate EXACTLY 30 multiple-choice questions based on the topic summary below.
+Generate EXACTLY 15 multiple-choice questions based on the topic summary below.
 You MUST output ONLY valid JSON (no markdown, no comments, no extra text).
 
 JSON format:
@@ -67,9 +67,10 @@ JSON format:
 ]
 
 Difficulty distribution:
-- Exactly 10 questions with difficulty = "easy"
-- Exactly 10 questions with difficulty = "medium"
-- Exactly 10 questions with difficulty = "hard"
+- Exactly 5 questions with difficulty = "easy"
+- Exactly 5 questions with difficulty = "medium"
+- Exactly 5 questions with difficulty = "hard"
+
 
 Important rules:
 - options must be exactly 4 strings
@@ -86,7 +87,7 @@ def simple_fallback_prompt(summary_text: str) -> str:
     Simplified prompt for HuggingFace fallback model.
     Generates 10-15 questions only to fit within token limits.
     """
-    return f"""Generate 10 multiple choice questions as JSON.
+    return f"""Generate 15 multiple choice questions as JSON.
 
 [
   {{"text": "question?", "options": ["A", "B", "C", "D"], "correct_answer": 0, "difficulty": "easy", "concept_tag": "concept"}}
@@ -134,9 +135,10 @@ def validate_questions(questions_data):
     if not isinstance(questions_data, list):
         return False, "Questions must be a list."
     
-    # Accept 10-30 questions (flexible for fallback models)
-    if len(questions_data) < 10:
-        return False, "Minimum 10 questions required."
+    # Accept exactly 15 questions
+    if len(questions_data) != 15:
+        return False, "Exactly 15 questions required."
+
     if len(questions_data) > 30:
         questions_data = questions_data[:30]  # Trim to 30
 
