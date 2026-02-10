@@ -54,6 +54,8 @@ const TopicUpload: React.FC<TopicUploadProps> = ({ user }) => {
 
       setHistory([savedTopic, ...history]);
       setSelectedTopic(savedTopic);
+      console.log("Saved topic:", savedTopic);
+
 
       setTitle("");
       setText("");
@@ -128,12 +130,11 @@ const TopicUpload: React.FC<TopicUploadProps> = ({ user }) => {
         <div className="mt-6 border p-4 rounded">
           <h2 className="text-xl font-bold mb-4">{selectedTopic.title}</h2>
 
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
-            className="prose max-w-none"
-          >
-            {selectedTopic.summary || ""}
-          </ReactMarkdown>
+          <div className="markdown-body">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {selectedTopic.summary}
+            </ReactMarkdown>
+          </div>
         </div>
       )}
     </div>
