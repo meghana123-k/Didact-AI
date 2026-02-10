@@ -115,6 +115,7 @@ const QuizAttemptSession: React.FC<QuizAttemptSessionProps> = ({
         token,
       );
       onComplete(attempt);
+      console.log("Attempt result:", attempt);
     } catch (err: any) {
       setError(err.message);
     } finally {

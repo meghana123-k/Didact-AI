@@ -27,6 +27,7 @@ class QuizAttempt(db.Model):
             "user_id": self.user_id,
             "attempt_number": self.attempt_number,
             "score": self.score,
+            "question_results": self.question_results,
             "answers": json.loads(self.answers_json),
             "time_taken_seconds": self.time_taken_seconds,
             "attempted_at": self.attempted_at.isoformat(),

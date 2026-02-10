@@ -4,7 +4,6 @@ import { quizService } from "../services/quizService";
 import { certificateService } from "../services/certificateService";
 import { Topic, User, Quiz, QuizAttempt } from "../types";
 import QuizAttemptSession from "./QuizAttemptSession";
-
 interface QuizGeneratorProps {
   user: User;
 }
@@ -19,6 +18,7 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ user }) => {
   const [attempts, setAttempts] = useState<QuizAttempt[]>([]);
   const [isTakingQuiz, setIsTakingQuiz] = useState(false);
   const [error, setError] = useState("");
+  const [lastAttempt, setLastAttempt] = useState<QuizAttempt | null>(null);
 
   const token = localStorage.getItem("token") || "";
 
@@ -61,6 +61,7 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ user }) => {
     setError("");
     setCurrentQuiz(null);
     setAttempts([]);
+    setLastAttempt(null);
 
     try {
       // ✅ Backend generates quiz directly
@@ -77,9 +78,6 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ user }) => {
     }
   };
 
-  // ==========================
-  // Claim Certificate
-  // ==========================
   const onClaimCert = async (quizId: string) => {
     setCertLoading(quizId);
     try {
@@ -106,6 +104,7 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ user }) => {
         user={user}
         onComplete={(a) => {
           setIsTakingQuiz(false);
+          setLastAttempt(a);
           setAttempts([a, ...attempts]);
         }}
         onCancel={() => setIsTakingQuiz(false)}
@@ -213,6 +212,68 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ user }) => {
               )}
             </div>
           ))}
+        </div>
+      )}
+      {lastAttempt && (
+        <div className="bg-white p-8 rounded-3xl border shadow-sm">
+          <h3 className="text-xl font-bold mb-6">
+            Detailed Performance Review
+          </h3>
+          <button
+            onClick={() => setLastAttempt(null)}
+            className="text-xs text-slate-400 hover:text-slate-600"
+          >
+            Close Review
+          </button>
+
+          <div className="mb-6 p-6 bg-indigo-50 rounded-2xl border border-indigo-100">
+            <h4 className="text-lg font-bold text-indigo-700">
+              Final Score: {lastAttempt.score.toFixed(0)}%
+            </h4>
+          </div>
+
+          <div className="space-y-6">
+            {lastAttempt.question_results.map((q, index) => (
+              <div
+                key={q.question_id}
+                className={`p-5 rounded-2xl border ${
+                  q.is_correct
+                    ? "bg-emerald-50 border-emerald-200"
+                    : "bg-red-50 border-red-200"
+                }`}
+              >
+                <p className="font-semibold mb-3">
+                  {index + 1}. {q.question}
+                </p>
+
+                <div className="space-y-2">
+                  {q.options.map((opt: string, idx: number) => {
+                    const isSelected = idx === q.selected_answer;
+                    const isCorrect = idx === q.correct_answer;
+
+                    return (
+                      <div
+                        key={idx}
+                        className={`p-3 rounded-xl border ${
+                          isCorrect
+                            ? "bg-emerald-100 border-emerald-500"
+                            : isSelected
+                              ? "bg-red-100 border-red-400"
+                              : "bg-white border-slate-100"
+                        }`}
+                      >
+                        {opt}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="mt-3 text-xs text-slate-500">
+                  Concept: {q.concept_tag} • Difficulty: {q.difficulty}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>
