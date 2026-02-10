@@ -23,4 +23,17 @@ export const certificateService = {
   getDownloadUrl(certUid: string): string {
     return `${API_BASE_URL}/download/${certUid}`;
   },
+  async getMyCertificates(token: string) {
+    const response = await fetch(`${API_BASE_URL}/my`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to load certificates");
+    }
+
+    return response.json();
+  },
 };

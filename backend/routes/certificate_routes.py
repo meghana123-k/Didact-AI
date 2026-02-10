@@ -1,4 +1,3 @@
-
 from flask import Blueprint, jsonify, send_file, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from database.db import db
@@ -9,133 +8,135 @@ from models.quiz import Quiz
 from datetime import datetime
 import uuid
 import os
-from reportlab.lib.pagesizes import A4
-from reportlab.pdfgen import canvas
+from PIL import Image, ImageDraw, ImageFont
 
 certificate_bp = Blueprint('certificate', __name__)
 
 
-def _build_certificate_pdf_path(cert_uid: str) -> str:
-    base_folder = current_app.config.get("UPLOAD_FOLDER")
-    return os.path.join(base_folder, f"{cert_uid}.pdf")
+def _build_file_path(cert_uid: str):
+    base = current_app.config.get("UPLOAD_FOLDER", "certificates")
+    os.makedirs(base, exist_ok=True)
+    return os.path.join(base, f"{cert_uid}.png")
 
 
-def _generate_certificate_pdf(cert: Certificate, user: User, quiz: Quiz, path: str):
-    """
-    Generate a professional-looking PDF certificate using ReportLab.
-    """
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    c = canvas.Canvas(path, pagesize=A4)
-    width, height = A4
+def _generate_certificate(cert, user, quiz, path):
 
-    # Background
-    c.setFillColorRGB(1, 1, 1)
-    c.rect(0, 0, width, height, fill=1)
+    width, height = 1600, 1100
+    image = Image.new("RGB", (width, height), "#fdfcf8")
+    draw = ImageDraw.Draw(image)
+
+    try:
+        title_font = ImageFont.truetype("arial.ttf", 70)
+        name_font = ImageFont.truetype("arial.ttf", 55)
+        body_font = ImageFont.truetype("arial.ttf", 35)
+        small_font = ImageFont.truetype("arial.ttf", 25)
+    except:
+        title_font = name_font = body_font = small_font = None
+
+    # Border
+    draw.rectangle([40, 40, width-40, height-40], outline="#1e3a8a", width=8)
 
     # Title
-    c.setFont("Helvetica-Bold", 28)
-    c.setFillColorRGB(0.2, 0.2, 0.4)
-    c.drawCentredString(width / 2, height - 150, "Certificate of Achievement")
+    draw.text((width/2, 200), "Certificate of Achievement",
+              fill="#1e3a8a", font=title_font, anchor="mm")
 
-    # Subtitle
-    c.setFont("Helvetica", 14)
-    c.setFillColorRGB(0.25, 0.25, 0.25)
-    c.drawCentredString(width / 2, height - 190, "This certifies that")
+    draw.text((width/2, 300), "This is proudly presented to",
+              fill="black", font=body_font, anchor="mm")
 
-    # Student Name
-    c.setFont("Helvetica-Bold", 22)
-    c.drawCentredString(width / 2, height - 230, user.name)
+    draw.text((width/2, 420), user.name,
+              fill="#0f172a", font=name_font, anchor="mm")
 
-    # Body text
-    c.setFont("Helvetica", 13)
-    text = (
-        f"has successfully completed the mastery assessment on '{quiz.topic.title}' "
-        f"with a score of {cert.score:.1f}%."
-    )
-    c.drawCentredString(width / 2, height - 270, text)
+    text = f"For successfully completing the mastery assessment on '{quiz.topic.title}' with a score of {cert.score:.1f}%."
+    draw.text((width/2, 520), text,
+              fill="black", font=body_font, anchor="mm")
 
-    # Metadata
-    c.setFont("Helvetica", 11)
-    issued = cert.issued_at.strftime("%d %B %Y")
-    c.drawString(80, 120, f"Date: {issued}")
-    c.drawString(80, 100, f"Certificate ID: {cert.certificate_uid}")
+    draw.text((150, 950),
+              f"Issued on: {cert.issued_at.strftime('%d %B %Y')}",
+              fill="black", font=small_font)
 
-    c.setFont("Helvetica-Oblique", 10)
-    c.drawRightString(width - 80, 100, "DidAct AI · Intelligent Learning Insights")
+    draw.text((150, 990),
+              f"Certificate ID: {cert.certificate_uid}",
+              fill="black", font=small_font)
 
-    c.showPage()
-    c.save()
+    image.save(path)
 
 
 @certificate_bp.route('/generate/<quiz_id>', methods=['POST'])
 @jwt_required()
-def generate_cert(quiz_id):
+def generate_certificate(quiz_id):
+
     user_id = get_jwt_identity()
 
-    # Check if user has passed (Score >= 75%)
     best_attempt = (
-        QuizAttempt.query.filter_by(user_id=user_id, quiz_id=quiz_id)
+        QuizAttempt.query
+        .filter_by(user_id=user_id, quiz_id=quiz_id)
         .order_by(QuizAttempt.score.desc())
         .first()
     )
 
     if not best_attempt or best_attempt.score < 75:
-        return jsonify({
-            "error": "Certificate requires a passing score of 75% or higher",
-            "status": 403,
-        }), 403
+        return jsonify({"error": "Minimum 75% required"}), 403
 
     user = User.query.get(user_id)
     quiz = Quiz.query.get(quiz_id)
-    if not user or not quiz or not quiz.topic:
-        return jsonify({"error": "Quiz or user not found", "status": 404}), 404
 
-    # Check for existing certificate
     existing = Certificate.query.filter_by(user_id=user_id, quiz_id=quiz_id).first()
-    if existing:
-        # Ensure PDF exists; regenerate if missing.
-        if not existing.pdf_path or not os.path.exists(existing.pdf_path):
-            pdf_path = _build_certificate_pdf_path(existing.certificate_uid)
-            _generate_certificate_pdf(existing, user, quiz, pdf_path)
-            existing.pdf_path = pdf_path
-            db.session.commit()
-        return jsonify(existing.to_dict()), 200
 
-    # Create record
+    if existing:
+        if not existing.file_path or not os.path.exists(existing.file_path):
+            path = _build_file_path(existing.certificate_uid)
+            _generate_certificate(existing, user, quiz, path)
+            existing.file_path = path
+            db.session.commit()
+        return jsonify(existing.to_dict())
+
     cert_uid = f"CERT-{uuid.uuid4().hex[:8].upper()}"
+
     new_cert = Certificate(
         user_id=user_id,
         quiz_id=quiz_id,
         certificate_uid=cert_uid,
         score=best_attempt.score,
-        issued_at=datetime.utcnow(),
+        issued_at=datetime.utcnow()
     )
 
     try:
-        pdf_path = _build_certificate_pdf_path(cert_uid)
-        _generate_certificate_pdf(new_cert, user, quiz, pdf_path)
-        new_cert.pdf_path = pdf_path
+        path = _build_file_path(cert_uid)
+        _generate_certificate(new_cert, user, quiz, path)
+        new_cert.file_path = path
 
         db.session.add(new_cert)
         db.session.commit()
+
         return jsonify(new_cert.to_dict()), 201
+
     except Exception as e:
         db.session.rollback()
-        return jsonify({"error": str(e), "status": 500}), 500
+        return jsonify({"error": str(e)}), 500
 
 
-@certificate_bp.route('/download/<cert_uid>', methods=['GET'])
-def download_cert(cert_uid):
+@certificate_bp.route('/download/<cert_uid>')
+def download_certificate(cert_uid):
+
     cert = Certificate.query.filter_by(certificate_uid=cert_uid).first()
-    if not cert:
-        return jsonify({"error": "Certificate not found", "status": 404}), 404
 
-    if not cert.pdf_path or not os.path.exists(cert.pdf_path):
-        return jsonify({"error": "Certificate PDF not available", "status": 404}), 404
+    if not cert or not cert.file_path or not os.path.exists(cert.file_path):
+        return jsonify({"error": "Certificate not found"}), 404
 
     return send_file(
-        cert.pdf_path,
-        mimetype="application/pdf",
+        cert.file_path,
+        mimetype="image/png",
         as_attachment=True,
-        download_name=f"{cert.certificate_uid}.pdf",
+        download_name=f"{cert.certificate_uid}.png"
     )
+
+
+@certificate_bp.route('/my')
+@jwt_required()
+def get_my_certificates():
+    user_id = get_jwt_identity()
+
+    certs = Certificate.query.filter_by(user_id=user_id)\
+        .order_by(Certificate.issued_at.desc()).all()
+
+    return jsonify([c.to_dict() for c in certs])

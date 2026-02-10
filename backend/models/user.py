@@ -13,7 +13,12 @@ class User(db.Model):
     
     topics = db.relationship('Topic', backref='author', lazy=True)
     attempts = db.relationship('QuizAttempt', backref='user', lazy=True)
-    certificates = db.relationship('Certificate', backref='user', lazy=True)
+    certificates = db.relationship(
+    "Certificate",
+    back_populates="user",
+    cascade="all, delete-orphan"
+    )
+
 
     def to_dict(self):
         return {

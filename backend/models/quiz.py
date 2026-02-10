@@ -9,9 +9,9 @@ class Quiz(db.Model):
     topic_id = db.Column(db.String(36), db.ForeignKey("topics.id"), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    questions = db.relationship("Question", backref="quiz", cascade="all, delete-orphan")
-    attempts = db.relationship("QuizAttempt", backref="quiz")
-    certificates = db.relationship("Certificate", backref="quiz")
+    questions = db.relationship("Question", cascade="all, delete-orphan")
+    attempts = db.relationship("QuizAttempt")
+    certificates = db.relationship("Certificate")
 
     def to_dict(self):
         return {

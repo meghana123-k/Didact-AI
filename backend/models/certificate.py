@@ -1,27 +1,31 @@
-
 from database.db import db
 from datetime import datetime
 import uuid
 
 class Certificate(db.Model):
     __tablename__ = 'certificates'
+
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     user_id = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=False)
     quiz_id = db.Column(db.String(36), db.ForeignKey('quizzes.id'), nullable=False)
+
     certificate_uid = db.Column(db.String(50), unique=True, nullable=False)
     score = db.Column(db.Float, nullable=False)
     issued_at = db.Column(db.DateTime, default=datetime.utcnow)
-    pdf_path = db.Column(db.String(255), nullable=True)
+
+    file_path = db.Column(db.String(255), nullable=True)
+
+    # Proper relationship
+    user = db.relationship("User", back_populates="certificates")
+    quiz = db.relationship("Quiz")
 
     def to_dict(self):
         return {
             "id": self.id,
-            "user_id": self.user_id,
-            "quiz_id": self.quiz_id,
             "certificate_uid": self.certificate_uid,
             "score": self.score,
             "topic_title": self.quiz.topic.title if self.quiz and self.quiz.topic else "Unknown",
             "user_name": self.user.name if self.user else "Unknown",
-            "issued_at": self.issued_at.isoformat(),
-            "pdf_url": f"/api/certificate/download/{self.certificate_uid}"
+            "issued_at": self.issued_at.strftime("%d %B %Y"),
+            "download_url": f"/api/certificate/download/{self.certificate_uid}"
         }
