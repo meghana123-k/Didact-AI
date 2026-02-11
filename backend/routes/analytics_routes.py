@@ -3,7 +3,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from models.attempt import QuizAttempt
 from models.quiz import Quiz
 import json
-
+from models.topic import Topic
 analytics_bp = Blueprint('analytics', __name__)
 
 
@@ -101,12 +101,13 @@ def get_user_analytics(user_id):
     suggestions = []
     resources = []
 
-    if weak_concepts:
+    if weak_concepts and weak_concepts[0]["score"] < 70:
         worst = weak_concepts[0]
         suggestions.append(
             f"You are struggling with '{worst['concept']}' "
             f"(accuracy {worst['score']}%). Focus revision here first."
         )
+
 
     low_difficulty = [
         d for d in diff_breakdown if d["score"] < 60

@@ -87,15 +87,19 @@ def generate_certificate(quiz_id):
     user = User.query.get(user_id)
     quiz = Quiz.query.get(quiz_id)
 
-    existing = Certificate.query.filter_by(user_id=user_id, quiz_id=quiz_id).first()
+    
+    old_certs = Certificate.query.filter_by(
+        user_id=user_id,
+        quiz_id=quiz_id
+    ).all()
 
-    if existing:
-        if not existing.file_path or not os.path.exists(existing.file_path):
-            path = _build_file_path(existing.certificate_uid)
-            _generate_certificate(existing, user, quiz, path)
-            existing.file_path = path
-            db.session.commit()
-        return jsonify(existing.to_dict())
+    for cert in old_certs:
+        if cert.file_path and os.path.exists(cert.file_path):
+            os.remove(cert.file_path)  
+        db.session.delete(cert)
+
+    db.session.commit()
+
 
     cert_uid = f"CERT-{uuid.uuid4().hex[:8].upper()}"
 

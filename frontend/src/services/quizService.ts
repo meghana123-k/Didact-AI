@@ -101,7 +101,6 @@ export const quizService = {
     token: string,
   ): Promise<QuizAttempt[]> {
     const response = await fetch(`${API_BASE_URL}/topic-history/${topicId}`, {
-      method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
       },

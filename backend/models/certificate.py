@@ -24,8 +24,8 @@ class Certificate(db.Model):
             "id": self.id,
             "certificate_uid": self.certificate_uid,
             "score": self.score,
-            "topic_title": self.quiz.topic.title if self.quiz and self.quiz.topic else "Unknown",
-            "user_name": self.user.name if self.user else "Unknown",
             "issued_at": self.issued_at.strftime("%d %B %Y"),
+            "topic_title": self.quiz.topic.title,
+            "user_name": self.user.name,
             "download_url": f"/api/certificate/download/{self.certificate_uid}"
         }

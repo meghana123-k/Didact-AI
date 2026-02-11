@@ -14,22 +14,17 @@ interface QuizPageProps {
 const QuizPage: React.FC<QuizPageProps> = ({ user }) => {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [selectedTopicId, setSelectedTopicId] = useState("");
-
   const [loading, setLoading] = useState(false);
   const [currentQuiz, setCurrentQuiz] = useState<Quiz | null>(null);
-
   const [attempts, setAttempts] = useState<QuizAttempt[]>([]);
   const [isTakingQuiz, setIsTakingQuiz] = useState(false);
-
   const [error, setError] = useState("");
   const [certLoading, setCertLoading] = useState<string | null>(null);
   const [lastAttempt, setLastAttempt] = useState<QuizAttempt | null>(null);
 
   const token = localStorage.getItem("token") || "";
 
-  // ================================
-  // Load Topic History
-  // ================================
+  // Load topics
   useEffect(() => {
     async function loadTopics() {
       try {
@@ -43,9 +38,27 @@ const QuizPage: React.FC<QuizPageProps> = ({ user }) => {
     loadTopics();
   }, [user.id]);
 
-  // ================================
-  // Generate Quiz (Backend Only)
-  // ================================
+  // When topic changes → load attempts immediately
+  const handleTopicChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const topicId = e.target.value;
+    setSelectedTopicId(topicId);
+    setCurrentQuiz(null);
+    setLastAttempt(null);
+
+    if (!topicId) {
+      setAttempts([]);
+      return;
+    }
+
+    try {
+      const history = await quizService.getTopicAttemptHistory(topicId, token);
+      setAttempts(history);
+    } catch {
+      setAttempts([]);
+    }
+  };
+
+  // Generate quiz
   const handleGenerate = async () => {
     if (!selectedTopicId) {
       return setError("Please select a topic first.");
@@ -55,18 +68,9 @@ const QuizPage: React.FC<QuizPageProps> = ({ user }) => {
     setError("");
 
     try {
-      // ✅ Backend generates quiz automatically
       const newQuiz = await quizService.generate(selectedTopicId, token);
 
       setCurrentQuiz(newQuiz);
-
-      // Load attempts history
-      const history = await quizService.getTopicAttemptHistory(
-        selectedTopicId,
-        token,
-      );
-      setAttempts(history);
-
     } catch (err: any) {
       setError(err.message || "Quiz generation failed.");
     } finally {
@@ -74,16 +78,12 @@ const QuizPage: React.FC<QuizPageProps> = ({ user }) => {
     }
   };
 
-  // ================================
-  // Claim Certificate
-  // ================================
+  // Certificate
   const handleClaimCert = async (quizId: string) => {
     setCertLoading(quizId);
 
     try {
       const cert = await certificateService.generate(quizId, token);
-
-      alert(`Certificate Issued: ${cert.certificate_uid}`);
 
       window.open(
         certificateService.getDownloadUrl(cert.certificate_uid),
@@ -96,9 +96,7 @@ const QuizPage: React.FC<QuizPageProps> = ({ user }) => {
     }
   };
 
-  // ================================
-  // Quiz Attempt Session
-  // ================================
+  // Quiz session
   if (isTakingQuiz && currentQuiz) {
     return (
       <QuizAttemptSession
@@ -122,15 +120,10 @@ const QuizPage: React.FC<QuizPageProps> = ({ user }) => {
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-20">
-      {/* Header */}
       <div className="bg-white p-8 rounded-3xl shadow border">
         <h1 className="text-3xl font-bold text-slate-800">
           Mastery Assessments
         </h1>
-
-        <p className="text-slate-500 mt-2">
-          Select a saved topic → Backend generates a 15-question quiz.
-        </p>
 
         {error && (
           <div className="mt-4 p-3 bg-red-50 text-red-600 rounded-xl text-sm">
@@ -141,7 +134,7 @@ const QuizPage: React.FC<QuizPageProps> = ({ user }) => {
         <div className="flex gap-3 mt-6">
           <select
             value={selectedTopicId}
-            onChange={(e) => setSelectedTopicId(e.target.value)}
+            onChange={handleTopicChange}
             className="px-4 py-3 rounded-xl border w-full"
           >
             <option value="">-- Choose Topic --</option>
@@ -161,12 +154,8 @@ const QuizPage: React.FC<QuizPageProps> = ({ user }) => {
           </button>
         </div>
       </div>
-
-      {/* Quiz Preview */}
       {currentQuiz && (
         <div className="bg-white p-8 rounded-3xl border shadow">
-          <h2 className="text-xl font-bold mb-3">Quiz Ready (15 Questions)</h2>
-
           <button
             onClick={() => setIsTakingQuiz(true)}
             className="px-6 py-3 bg-green-600 text-white rounded-xl font-bold"
@@ -175,8 +164,6 @@ const QuizPage: React.FC<QuizPageProps> = ({ user }) => {
           </button>
         </div>
       )}
-
-      {/* Attempts */}
       {attempts.length > 0 && (
         <div className="bg-white p-8 rounded-3xl border shadow">
           <h2 className="text-lg font-bold mb-4">Attempt History</h2>
@@ -186,7 +173,12 @@ const QuizPage: React.FC<QuizPageProps> = ({ user }) => {
               key={a.id}
               className="p-4 border rounded-xl mb-3 flex justify-between"
             >
-              <div>
+              <div
+                className="cursor-pointer"
+                onClick={() =>
+                  setLastAttempt((prev) => (prev?.id === a.id ? null : a))
+                }
+              >
                 Attempt #{a.attempt_number} — Score:{" "}
                 <b>{a.score.toFixed(0)}%</b>
               </div>

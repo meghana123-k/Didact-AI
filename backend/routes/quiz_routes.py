@@ -13,7 +13,6 @@ import os
 from dotenv import load_dotenv
 from google import genai
 from transformers import pipeline
-
 load_dotenv()
 
 quiz_bp = Blueprint("quiz", __name__)
@@ -289,14 +288,26 @@ def submit_attempt():
     quiz = Quiz.query.get(quiz_id)
     if not quiz:
         return jsonify({"error": "Quiz not found", "status": 404}), 404
+    
+    attempt_count = (
+    db.session.query(QuizAttempt)
+    .join(Quiz)
+    .filter(
+        Quiz.topic_id == quiz.topic_id,
+        QuizAttempt.user_id == user_id
+    )
+    .count()
+)
 
-    attempts = QuizAttempt.query.filter_by(
-        user_id=user_id,
-        quiz_id=quiz_id
-    ).all()
 
-    if len(attempts) >= 10:
-        last = max(attempts, key=lambda x: x.attempted_at)
+    attempt_number = attempt_count + 1
+
+
+    print("Topic:", quiz.topic_id)
+    print("Existing attempts:", attempt_count)
+
+    if attempt_count >= 10:
+        last = max(attempt_count, key=lambda x: x.attempted_at)
         cooldown = last.attempted_at + timedelta(minutes=30)
         if datetime.utcnow() < cooldown:
             return jsonify({
@@ -333,7 +344,7 @@ def submit_attempt():
     attempt = QuizAttempt(
         quiz_id=quiz_id,
         user_id=user_id,
-        attempt_number=len(attempts) + 1,
+        attempt_number= attempt_count + 1,
         score=score,
         answers_json=json.dumps(answers),
         question_results=question_results,
