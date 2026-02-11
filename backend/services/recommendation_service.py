@@ -9,6 +9,7 @@ CACHE_TTL = timedelta(hours=24)
 
 
 def fetch_youtube_video(query):
+    print("API KEY:", YOUTUBE_API_KEY)
 
     cache_key = query
 
