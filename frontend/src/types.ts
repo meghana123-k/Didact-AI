@@ -51,7 +51,18 @@ export interface QuizAttempt {
   time_taken_seconds: number;
   attempted_at: string;
   integrity_flags: string[];
+  question_results: {
+    question_id: string;
+    question: string;
+    options: string[];
+    selected_answer: number;
+    correct_answer: number;
+    is_correct: boolean;
+    difficulty: string;
+    concept_tag: string;
+  }[];
 }
+
 
 // Added missing ProgressData interface for tracking user performance history
 export interface ProgressData {
@@ -61,9 +72,10 @@ export interface ProgressData {
 }
 
 export interface AnalyticsData {
-  accuracyTrend: { date: string; score: number }[];
+  accuracyTrend: { date: string; score: number; topic: string }[];
   weakConcepts: { concept: string; score: number; totalQuestions: number }[];
   difficultyBreakdown: { difficulty: string; score: number }[];
+  availableTopics: string[];
   integrityReport: {
     totalViolations: number;
     suspiciousAttempts: number;

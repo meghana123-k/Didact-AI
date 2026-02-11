@@ -11,7 +11,7 @@ class Quiz(db.Model):
 
     questions = db.relationship("Question", cascade="all, delete-orphan")
     attempts = db.relationship("QuizAttempt")
-    certificates = db.relationship("Certificate")
+    certificates = db.relationship("Certificate", back_populates="quiz", cascade="all, delete-orphan")
 
     def to_dict(self):
         return {

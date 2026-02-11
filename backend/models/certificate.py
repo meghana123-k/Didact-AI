@@ -17,8 +17,8 @@ class Certificate(db.Model):
 
     # Proper relationship
     user = db.relationship("User", back_populates="certificates")
-    quiz = db.relationship("Quiz")
-
+    quiz = db.relationship("Quiz", back_populates="certificates")
+    
     def to_dict(self):
         return {
             "id": self.id,

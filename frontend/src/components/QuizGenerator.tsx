@@ -102,10 +102,10 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ user }) => {
       <QuizAttemptSession
         quiz={currentQuiz}
         user={user}
-        onComplete={(a) => {
+        onComplete={async (a) => {
           setIsTakingQuiz(false);
           setLastAttempt(a);
-          setAttempts([a, ...attempts]);
+          await loadHistory(a.quiz_id);
         }}
         onCancel={() => setIsTakingQuiz(false)}
       />
@@ -200,16 +200,31 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ user }) => {
           <h3 className="font-bold mb-4">Attempts</h3>
 
           {attempts.map((a) => (
-            <div key={a.id} className="p-4 bg-slate-50 rounded-xl border mb-3">
-              Attempt #{a.attempt_number} — Score: {a.score.toFixed(0)}%
-              {a.score >= 75 && (
-                <button
-                  onClick={() => onClaimCert(a.quiz_id)}
-                  className="block mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold"
-                >
-                  Claim Certificate
-                </button>
-              )}
+            <div
+              key={a.id}
+              onClick={() => setLastAttempt(a)}
+              className="p-4 bg-slate-50 rounded-xl border mb-3 cursor-pointer hover:bg-slate-100 transition"
+            >
+              <div className="flex justify-between items-center">
+                <div>
+                  Attempt #{a.attempt_number} — Score: {a.score.toFixed(0)}%
+                  <p className="text-xs text-slate-400 mt-1">
+                    Click to view detailed review
+                  </p>
+                </div>
+
+                {a.score >= 20 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation(); // prevent triggering review
+                      onClaimCert(a.quiz_id);
+                    }}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold"
+                  >
+                    Claim Certificate
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </div>

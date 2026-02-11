@@ -23,6 +23,7 @@ const QuizPage: React.FC<QuizPageProps> = ({ user }) => {
 
   const [error, setError] = useState("");
   const [certLoading, setCertLoading] = useState<string | null>(null);
+  const [lastAttempt, setLastAttempt] = useState<QuizAttempt | null>(null);
 
   const token = localStorage.getItem("token") || "";
 
@@ -60,8 +61,12 @@ const QuizPage: React.FC<QuizPageProps> = ({ user }) => {
       setCurrentQuiz(newQuiz);
 
       // Load attempts history
-      const history = await quizService.getAttemptHistory(newQuiz.id, token);
+      const history = await quizService.getTopicAttemptHistory(
+        selectedTopicId,
+        token,
+      );
       setAttempts(history);
+
     } catch (err: any) {
       setError(err.message || "Quiz generation failed.");
     } finally {
@@ -99,9 +104,16 @@ const QuizPage: React.FC<QuizPageProps> = ({ user }) => {
       <QuizAttemptSession
         quiz={currentQuiz}
         user={user}
-        onComplete={(attempt) => {
+        onComplete={async (attempt) => {
           setIsTakingQuiz(false);
-          setAttempts((prev) => [attempt, ...prev]);
+          setLastAttempt(attempt);
+
+          const history = await quizService.getTopicAttemptHistory(
+            selectedTopicId,
+            token,
+          );
+
+          setAttempts(history);
         }}
         onCancel={() => setIsTakingQuiz(false)}
       />
@@ -179,7 +191,7 @@ const QuizPage: React.FC<QuizPageProps> = ({ user }) => {
                 <b>{a.score.toFixed(0)}%</b>
               </div>
 
-              {a.score >= 75 && (
+              {a.score >= 20 && (
                 <button
                   onClick={() => handleClaimCert(a.quiz_id)}
                   disabled={certLoading === a.quiz_id}
@@ -188,6 +200,43 @@ const QuizPage: React.FC<QuizPageProps> = ({ user }) => {
                   Claim Certificate
                 </button>
               )}
+            </div>
+          ))}
+        </div>
+      )}
+      {lastAttempt && (
+        <div className="bg-white p-8 rounded-3xl border shadow mt-6">
+          <h2 className="text-lg font-bold mb-4">
+            Detailed Review – Attempt #{lastAttempt.attempt_number}
+          </h2>
+
+          {lastAttempt.question_results.map((q, index) => (
+            <div
+              key={q.question_id}
+              className={`p-4 rounded-xl border mb-4 ${
+                q.is_correct
+                  ? "bg-green-50 border-green-200"
+                  : "bg-red-50 border-red-200"
+              }`}
+            >
+              <p className="font-semibold mb-2">
+                {index + 1}. {q.question}
+              </p>
+
+              {q.options.map((opt: string, idx: number) => (
+                <div
+                  key={idx}
+                  className={`p-2 rounded-md border mb-1 ${
+                    idx === q.correct_answer
+                      ? "bg-green-200 border-green-500"
+                      : idx === q.selected_answer
+                        ? "bg-red-200 border-red-400"
+                        : "bg-white"
+                  }`}
+                >
+                  {opt}
+                </div>
+              ))}
             </div>
           ))}
         </div>

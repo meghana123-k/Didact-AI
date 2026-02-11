@@ -74,8 +74,15 @@ def generate_certificate(quiz_id):
         .first()
     )
 
-    if not best_attempt or best_attempt.score < 75:
-        return jsonify({"error": "Minimum 75% required"}), 403
+    # if not best_attempt or best_attempt.score < 75:
+    #     return jsonify({"error": "Minimum 75% required"}), 403
+    MIN_SCORE = current_app.config.get("CERT_MIN_SCORE", 75)
+
+    if not best_attempt or best_attempt.score < MIN_SCORE:
+        return jsonify({
+            "error": f"Minimum {MIN_SCORE}% required"
+        }), 403
+
 
     user = User.query.get(user_id)
     quiz = Quiz.query.get(quiz_id)

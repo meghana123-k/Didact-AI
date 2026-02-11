@@ -8,7 +8,7 @@ from database.db import db
 from routes.auth_routes import auth_bp
 from routes.topic_routes import topic_bp
 from routes.quiz_routes import quiz_bp
-from routes.attempt_routes import attempt_bp
+# from routes.attempt_routes import attempt_bp
 from routes.integrity_routes import integrity_bp
 from routes.analytics_routes import analytics_bp
 from routes.certificate_routes import certificate_bp
@@ -19,6 +19,7 @@ load_dotenv()
 
 def create_app():
     app = Flask(__name__)
+    app.config["CERT_MIN_SCORE"] = 20 
     app.config.from_object(Config)
 
     # ✅ Correct CORS & preflight
@@ -61,7 +62,7 @@ def create_app():
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(topic_bp, url_prefix="/api/topic")
     app.register_blueprint(quiz_bp, url_prefix="/api/quiz")
-    app.register_blueprint(attempt_bp, url_prefix="/api/attempt")
+    # app.register_blueprint(attempt_bp, url_prefix="/api/attempt")
     app.register_blueprint(integrity_bp, url_prefix="/api/integrity")
     app.register_blueprint(analytics_bp, url_prefix="/api/analytics")
     app.register_blueprint(certificate_bp, url_prefix="/api/certificate")

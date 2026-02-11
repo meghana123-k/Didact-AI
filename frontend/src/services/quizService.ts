@@ -32,10 +32,6 @@ export const quizService = {
     }
   },
 
-  // ===============================
-  // ✅ Submit Attempt
-  // POST /api/quiz/attempt
-  // ===============================
   async submitAttempt(
     quizId: string,
     answers: number[],
@@ -83,10 +79,6 @@ export const quizService = {
     return response.json();
   },
 
-  // ===============================
-  // ✅ Attempt History
-  // GET /api/quiz/history/<user_id>/<quiz_id>
-  // ===============================
   async getAttemptHistory(
     quizId: string,
     token: string,
@@ -100,6 +92,23 @@ export const quizService = {
 
     if (!response.ok) {
       throw new Error("Failed to load attempt history");
+    }
+
+    return response.json();
+  },
+  async getTopicAttemptHistory(
+    topicId: string,
+    token: string,
+  ): Promise<QuizAttempt[]> {
+    const response = await fetch(`${API_BASE_URL}/topic-history/${topicId}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to load topic attempt history");
     }
 
     return response.json();

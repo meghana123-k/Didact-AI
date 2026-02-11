@@ -351,12 +351,7 @@ def submit_attempt():
     return jsonify(attempt.to_dict()), 201
 
 
-# ======================
-# ✅ Quiz History (THIS WAS MISSING)
-# ======================
-# ======================
-# ✅ Quiz Attempt History per Quiz
-# ======================
+
 @quiz_bp.route("/history/<quiz_id>", methods=["GET"])
 @jwt_required()
 def quiz_history(quiz_id):
@@ -369,3 +364,20 @@ def quiz_history(quiz_id):
 
     return jsonify([a.to_dict() for a in attempts]), 200
 
+@quiz_bp.route("/topic-history/<topic_id>", methods=["GET"])
+@jwt_required()
+def topic_attempt_history(topic_id):
+    user_id = get_jwt_identity()
+
+    attempts = (
+        QuizAttempt.query
+        .join(Quiz, Quiz.id == QuizAttempt.quiz_id)
+        .filter(
+            Quiz.topic_id == topic_id,
+            QuizAttempt.user_id == user_id
+        )
+        .order_by(QuizAttempt.attempted_at.desc())
+        .all()
+    )
+
+    return jsonify([a.to_dict() for a in attempts]), 200

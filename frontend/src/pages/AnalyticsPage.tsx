@@ -21,15 +21,22 @@ interface AnalyticsPageProps {
 const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ user }) => {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedTopic, setSelectedTopic] = useState<string>("");
+
   // Insights are now computed server-side in /api/analytics
 
   useEffect(() => {
-    fetchAnalytics();
-  }, [user.id]);
+    fetchAnalytics(selectedTopic || undefined);
+  }, [user.id, selectedTopic]);
 
-  const fetchAnalytics = async () => {
+
+  const fetchAnalytics = async (topicId?: string) => {
     try {
-      const response = await api.get(`/analytics/${user.id}`);
+      setLoading(true);
+      const url = topicId
+        ? `/analytics/${user.id}?topic_id=${topicId}`
+        : `/analytics/${user.id}`;
+      const response = await api.get(url);
       setData(response.data);
     } catch (e) {
       console.error("Failed to fetch analytics", e);
@@ -37,6 +44,7 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ user }) => {
       setLoading(false);
     }
   };
+
 
   if (loading) {
     return (
@@ -76,6 +84,20 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ user }) => {
           <p className="text-slate-500 font-medium">
             Deep data analysis for {user.name}
           </p>
+          <div className="mt-4">
+            <select
+              value={selectedTopic}
+              onChange={(e) => setSelectedTopic(e.target.value)}
+              className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 bg-white shadow-sm"
+            >
+              <option value="">All Topics</option>
+              {data?.availableTopics?.map((topic) => (
+                <option key={topic.id} value={topic.id}>
+                  {topic.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
         <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-6">
           <div className="text-center">
@@ -138,12 +160,20 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ user }) => {
                     tickMargin={10}
                   />
                   <Tooltip
+                    formatter={(value: number) => [`${value}%`, "Score"]}
+                    labelFormatter={(label: string, payload: any[]) => {
+                      if (payload && payload.length > 0) {
+                        return `${payload[0].payload.topic} • ${label}`;
+                      }
+                      return label;
+                    }}
                     contentStyle={{
                       borderRadius: "16px",
                       border: "none",
                       boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)",
                     }}
                   />
+
                   <Area
                     type="monotone"
                     dataKey="score"
@@ -180,6 +210,13 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ user }) => {
                     />
                     <YAxis stroke="#94a3b8" fontSize={11} domain={[0, 100]} />
                     <Tooltip
+                      formatter={(value: number) => [
+                        `${value}%`,
+                        "Average Score",
+                      ]}
+                      labelFormatter={(label: string) =>
+                        `Difficulty • ${label.charAt(0).toUpperCase() + label.slice(1)}`
+                      }
                       cursor={{ fill: "#f8fafc" }}
                       contentStyle={{
                         borderRadius: "16px",
@@ -187,6 +224,7 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ user }) => {
                         boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)",
                       }}
                     />
+
                     <Bar dataKey="score" radius={[8, 8, 0, 0]}>
                       {data.difficultyBreakdown.map((entry, index) => (
                         <Cell

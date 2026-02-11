@@ -11,7 +11,8 @@ class Config:
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=24)
     UPLOAD_FOLDER = os.path.join(os.getcwd(), 'backend', 'certificates', 'generated')
     ALLOWED_EXTENSIONS = {'pdf', 'docx', 'txt'}
-    
+    CERT_MIN_SCORE = int(os.environ.get("CERT_MIN_SCORE", 75))
+
     # Ensure upload directory exists
     if not os.path.exists(UPLOAD_FOLDER):
         os.makedirs(UPLOAD_FOLDER)
