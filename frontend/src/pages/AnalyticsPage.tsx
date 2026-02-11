@@ -22,11 +22,14 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ user }) => {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedTopic, setSelectedTopic] = useState<string>("");
+  const [resource, setResource] = useState<any | null>(null);
+  const [loadingResource, setLoadingResource] = useState(false);
 
   // Insights are now computed server-side in /api/analytics
 
   useEffect(() => {
     fetchAnalytics(selectedTopic || undefined);
+    setResource(null);
   }, [user.id, selectedTopic]);
 
 
@@ -42,6 +45,21 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ user }) => {
       console.error("Failed to fetch analytics", e);
     } finally {
       setLoading(false);
+    }
+  };
+  const fetchRecommendation = async (concept: string) => {
+    try {
+      setLoadingResource(true);
+
+      const response = await api.get(
+        `/analytics/recommendation/${concept}?topic_id=${selectedTopic}`,
+      );
+
+      setResource(response.data);
+    } catch (err) {
+      console.error("Recommendation failed", err);
+    } finally {
+      setLoadingResource(false);
     }
   };
 
@@ -302,18 +320,34 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ user }) => {
                     Recommended Resources
                   </p>
                   <div className="space-y-2">
-                    {data.aiInsights.recommendedResources.map((res, i) => (
+                    {data.weakConcepts.length > 0 && (
+                      <button
+                        onClick={() =>
+                          fetchRecommendation(data.weakConcepts[0].concept)
+                        }
+                        className="w-full p-3 bg-white/10 rounded-xl hover:bg-white/20 transition-all text-sm font-bold"
+                      >
+                        Get Smart Recommendation
+                      </button>
+                    )}
+
+                    {loadingResource && (
+                      <p className="text-xs mt-3 opacity-70">
+                        Loading recommendation...
+                      </p>
+                    )}
+
+                    {resource && (
                       <a
-                        key={i}
-                        href={res.url}
+                        href={resource.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="block p-3 bg-white/10 rounded-xl hover:bg-white/20 transition-all text-sm font-bold flex items-center justify-between"
+                        className="block mt-4 p-3 bg-white/20 rounded-xl text-sm font-bold flex items-center justify-between"
                       >
-                        <span>{res.title}</span>
+                        <span>{resource.title}</span>
                         <i className="fas fa-external-link-alt text-[10px] opacity-60"></i>
                       </a>
-                    ))}
+                    )}
                   </div>
                 </div>
               </div>

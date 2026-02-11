@@ -4,6 +4,8 @@ from models.attempt import QuizAttempt
 from models.quiz import Quiz
 from models.topic import Topic
 from database.db import db
+from services.recommendation_service import (fetch_youtube_video, recommendation_cache,CACHE_TTL)
+from datetime import datetime
 import json
 
 analytics_bp = Blueprint('analytics', __name__)
@@ -199,3 +201,27 @@ def get_user_analytics(user_id):
             "recommendedResources": resources
         }
     }), 200
+@analytics_bp.route("/recommendation/<concept>", methods=["GET"])
+@jwt_required()
+def get_recommendation(concept):
+
+    topic_id = request.args.get("topic_id")
+
+    topic_name = ""
+    if topic_id:
+        topic = Topic.query.get(topic_id)
+        if topic:
+            topic_name = topic.title
+
+    query = f"{topic_name} {concept} explained clearly for beginners"
+
+    video = fetch_youtube_video(query)
+
+    if not video:
+        video = {
+            "title": f"Learn {concept}",
+            "type": "search",
+            "url": f"https://www.google.com/search?q={concept}+explained"
+        }
+
+    return jsonify(video), 200
