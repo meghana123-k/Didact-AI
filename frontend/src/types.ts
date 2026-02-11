@@ -75,7 +75,9 @@ export interface AnalyticsData {
   accuracyTrend: { date: string; score: number; topic: string }[];
   weakConcepts: { concept: string; score: number; totalQuestions: number }[];
   difficultyBreakdown: { difficulty: string; score: number }[];
-  availableTopics: string[];
+  availableTopics: { id: string; name: string }[];
+  overallScore: number;
+  performanceTier: string;
   integrityReport: {
     totalViolations: number;
     suspiciousAttempts: number;
@@ -87,6 +89,7 @@ export interface AnalyticsData {
     recommendedResources: { title: string; type: string; url: string }[];
   };
 }
+
 
 export interface Course {
   id: string;

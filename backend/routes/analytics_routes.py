@@ -71,6 +71,17 @@ def get_user_analytics(user_id):
             "score": attempt.score,
             "topic": topic.title
         })
+        overall_score = round(
+            sum([a.score for a in attempts]) / len(attempts), 2
+        )
+        if overall_score >= 90:
+            performance_tier = "Expert"
+        elif overall_score >= 75:
+            performance_tier = "Advanced"
+        elif overall_score >= 60:
+            performance_tier = "Intermediate"
+        else:
+            performance_tier = "Needs Improvement"
 
         # Integrity
         flags = json.loads(attempt.integrity_flags) if attempt.integrity_flags else []
@@ -108,6 +119,7 @@ def get_user_analytics(user_id):
             })
 
     weak_concepts.sort(key=lambda x: x["score"])
+    weak_concepts = [wc for wc in weak_concepts if wc["score"] < 80]
 
 
     diff_breakdown = []
@@ -127,21 +139,27 @@ def get_user_analytics(user_id):
     suggestions = []
     resources = []
 
-    # Concept-based suggestion (only if weak)
-    if weak_concepts and weak_concepts[0]["score"] < 70:
-        worst = weak_concepts[0]
+    # HIGH PERFORMANCE CASE
+    if overall_score >= 90:
+        suggestions.append(
+            f"Outstanding performance in {topic.title if topic_filter else 'all topics'}. "
+            "You are operating at an expert level."
+        )
+        suggestions.append(
+            "Start solving advanced problem sets or real-world case studies."
+        )
 
+    elif overall_score >= 75:
+        suggestions.append(
+            "Strong performance. Push into advanced difficulty consistently."
+        )
+
+    elif weak_concepts:
+        worst = weak_concepts[0]
         suggestions.append(
             f"You are struggling with '{worst['concept']}' "
             f"(accuracy {worst['score']}%). Focus revision here first."
         )
-
-        # Generic concept-based search link
-        resources.append({
-            "title": f"Improve {worst['concept']}",
-            "type": "search",
-            "url": f"https://www.google.com/search?q={worst['concept']}+concept+explained"
-        })
 
     # Difficulty instability
     unstable = [d for d in diff_breakdown if d["score"] < 60]
@@ -156,11 +174,12 @@ def get_user_analytics(user_id):
             "Integrity flags detected. Stay focused to build exam resilience."
         )
 
-    # Positive reinforcement
+    # Fallback
     if not suggestions:
         suggestions.append(
-            "Excellent consistency. Increase difficulty level gradually."
+            "Consistent learning pattern detected. Maintain discipline."
         )
+
 
     # Fallback resource if nothing added
     if not resources:
@@ -186,21 +205,24 @@ def get_user_analytics(user_id):
 
 
     return jsonify({
-        "availableTopics": available_topics,
-        "accuracyTrend": accuracy_trend,
-        "weakConcepts": weak_concepts[:5],
-        "difficultyBreakdown": diff_breakdown,
-        "integrityReport": {
-            "totalViolations": total_violations,
-            "suspiciousAttempts": suspicious_count,
-            "tabSwitches": total_violations // 2,
-            "windowBlurs": total_violations // 2,
-        },
-        "aiInsights": {
-            "suggestions": suggestions,
-            "recommendedResources": resources
-        }
-    }), 200
+    "availableTopics": available_topics,
+    "accuracyTrend": accuracy_trend,
+    "weakConcepts": weak_concepts[:5],
+    "difficultyBreakdown": diff_breakdown,
+    "overallScore": overall_score,
+    "performanceTier": performance_tier,
+    "integrityReport": {
+        "totalViolations": total_violations,
+        "suspiciousAttempts": suspicious_count,
+        "tabSwitches": total_violations // 2,
+        "windowBlurs": total_violations // 2,
+    },
+    "aiInsights": {
+        "suggestions": suggestions,
+        "recommendedResources": []
+    }
+}), 200
+
 @analytics_bp.route("/recommendation/<concept>", methods=["GET"])
 @jwt_required()
 def get_recommendation(concept):
