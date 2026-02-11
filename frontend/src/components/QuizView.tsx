@@ -42,68 +42,89 @@ const QuizView: React.FC<QuizViewProps> = ({
   };
 
   return (
-    <div className="max-w-2xl mx-auto mt-10">
-      <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-xl font-bold text-slate-800">Knowledge Check</h2>
-        <div className="px-3 py-1 bg-slate-100 rounded-lg text-sm text-slate-500">
-          Question {currentIndex + 1} of {questions.length}
-        </div>
-      </div>
+    <div className="min-h-screen bg-[#0f172a] text-slate-100 flex items-center justify-center px-6 py-12">
+      <div className="w-full max-w-3xl space-y-8">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-semibold tracking-tight">
+            Knowledge Check
+          </h2>
 
-      <div className="bg-white p-8 rounded-3xl shadow-xl border border-slate-100">
-        <h3 className="text-lg font-semibold text-slate-800 mb-8">
-          {currentQuestion.question}
-        </h3>
-
-        <div className="space-y-4">
-          {currentQuestion.options.map((option, idx) => {
-            const isCorrect = idx === currentQuestion.correctAnswer;
-            const isSelected = idx === selectedOption;
-
-            let bgClass = "bg-slate-50 border-slate-100 hover:border-blue-200";
-            if (showResult) {
-              if (isCorrect)
-                bgClass = "bg-emerald-50 border-emerald-500 text-emerald-700";
-              else if (isSelected)
-                bgClass = "bg-red-50 border-red-500 text-red-700";
-            } else if (isSelected) {
-              bgClass = "bg-blue-50 border-blue-500 text-blue-700";
-            }
-
-            return (
-              <button
-                key={idx}
-                onClick={() => handleOptionSelect(idx)}
-                className={`w-full p-4 text-left rounded-2xl border-2 transition-all ${bgClass} flex items-center justify-between group`}
-              >
-                <span>{option}</span>
-                {showResult && isCorrect && (
-                  <i className="fas fa-check-circle text-emerald-500"></i>
-                )}
-                {showResult && isSelected && !isCorrect && (
-                  <i className="fas fa-times-circle text-red-500"></i>
-                )}
-              </button>
-            );
-          })}
+          <div className="px-4 py-2 bg-[#1e293b] border border-slate-700 rounded-xl text-sm text-slate-400">
+            Question {currentIndex + 1} of {questions.length}
+          </div>
         </div>
 
-        <div className="mt-10 flex gap-4">
-          <button
-            onClick={onCancel}
-            className="flex-1 py-3 text-slate-500 font-bold hover:bg-slate-50 rounded-xl transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleNext}
-            disabled={selectedOption === null}
-            className="flex-[2] py-4 bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 disabled:opacity-50 transition-all"
-          >
-            {currentIndex === questions.length - 1
-              ? "Finish Quiz"
-              : "Next Question"}
-          </button>
+        {/* Card */}
+        <div className="bg-[#1e293b] border border-slate-700 rounded-2xl p-10 shadow-sm">
+          <h3 className="text-xl font-semibold mb-10 leading-relaxed">
+            {currentQuestion.question}
+          </h3>
+
+          <div className="space-y-4">
+            {currentQuestion.options.map((option, idx) => {
+              const isCorrect = idx === currentQuestion.correctAnswer;
+              const isSelected = idx === selectedOption;
+
+              let style =
+                "bg-[#0f172a] border-slate-700 hover:border-indigo-500 text-slate-300";
+
+              if (showResult) {
+                if (isCorrect) {
+                  style =
+                    "bg-emerald-900/30 border-emerald-500 text-emerald-300";
+                } else if (isSelected) {
+                  style = "bg-red-900/30 border-red-500 text-red-300";
+                }
+              } else if (isSelected) {
+                style = "bg-indigo-900/30 border-indigo-500 text-indigo-300";
+              }
+
+              return (
+                <button
+                  key={idx}
+                  onClick={() => handleOptionSelect(idx)}
+                  className={`w-full p-5 text-left rounded-2xl border-2 transition-all ${style}`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">{option}</span>
+
+                    {showResult && isCorrect && (
+                      <span className="text-emerald-400 text-sm">✓</span>
+                    )}
+                    {showResult && isSelected && !isCorrect && (
+                      <span className="text-red-400 text-sm">✕</span>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Footer Buttons */}
+          <div className="mt-10 flex gap-4">
+            <button
+              onClick={onCancel}
+              className="flex-1 py-3 rounded-xl border border-slate-700 text-slate-400 hover:bg-slate-800 transition"
+            >
+              Cancel
+            </button>
+
+            <button
+              onClick={handleNext}
+              disabled={selectedOption === null}
+              className="flex-[2] py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 transition font-semibold disabled:opacity-40"
+            >
+              {currentIndex === questions.length - 1
+                ? "Finish Quiz"
+                : "Next Question"}
+            </button>
+          </div>
+        </div>
+
+        {/* Progress Indicator */}
+        <div className="text-center text-sm text-slate-500">
+          Score So Far: {score} / {questions.length}
         </div>
       </div>
     </div>

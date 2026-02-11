@@ -24,7 +24,6 @@ const QuizPage: React.FC<QuizPageProps> = ({ user }) => {
 
   const token = localStorage.getItem("token") || "";
 
-  // Load topics
   useEffect(() => {
     async function loadTopics() {
       try {
@@ -34,11 +33,9 @@ const QuizPage: React.FC<QuizPageProps> = ({ user }) => {
         setError("Failed to load saved topics.");
       }
     }
-
     loadTopics();
   }, [user.id]);
 
-  // When topic changes → load attempts immediately
   const handleTopicChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const topicId = e.target.value;
     setSelectedTopicId(topicId);
@@ -58,7 +55,6 @@ const QuizPage: React.FC<QuizPageProps> = ({ user }) => {
     }
   };
 
-  // Generate quiz
   const handleGenerate = async () => {
     if (!selectedTopicId) {
       return setError("Please select a topic first.");
@@ -69,7 +65,6 @@ const QuizPage: React.FC<QuizPageProps> = ({ user }) => {
 
     try {
       const newQuiz = await quizService.generate(selectedTopicId, token);
-
       setCurrentQuiz(newQuiz);
     } catch (err: any) {
       setError(err.message || "Quiz generation failed.");
@@ -78,7 +73,6 @@ const QuizPage: React.FC<QuizPageProps> = ({ user }) => {
     }
   };
 
-  // Certificate
   const handleClaimCert = async (quizId: string) => {
     setCertLoading(quizId);
 
@@ -96,7 +90,6 @@ const QuizPage: React.FC<QuizPageProps> = ({ user }) => {
     }
   };
 
-  // Quiz session
   if (isTakingQuiz && currentQuiz) {
     return (
       <QuizAttemptSession
@@ -119,23 +112,22 @@ const QuizPage: React.FC<QuizPageProps> = ({ user }) => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 pb-20">
-      <div className="bg-white p-8 rounded-3xl shadow border">
-        <h1 className="text-3xl font-bold text-slate-800">
-          Mastery Assessments
-        </h1>
+    <div className="min-h-screen bg-[#0f172a] text-slate-100 px-8 py-12">
+      {/* Header Card */}
+      <div className="bg-[#1e293b] p-8 rounded-2xl border border-slate-700">
+        <h1 className="text-3xl font-semibold">Mastery Assessments</h1>
 
         {error && (
-          <div className="mt-4 p-3 bg-red-50 text-red-600 rounded-xl text-sm">
+          <div className="mt-4 p-3 bg-red-900/30 text-red-400 rounded-xl text-sm border border-red-700">
             {error}
           </div>
         )}
 
-        <div className="flex gap-3 mt-6">
+        <div className="flex gap-4 mt-6">
           <select
             value={selectedTopicId}
             onChange={handleTopicChange}
-            className="px-4 py-3 rounded-xl border w-full"
+            className="px-4 py-3 rounded-xl bg-[#0f172a] border border-slate-700 w-full"
           >
             <option value="">-- Choose Topic --</option>
             {topics.map((t) => (
@@ -148,30 +140,34 @@ const QuizPage: React.FC<QuizPageProps> = ({ user }) => {
           <button
             onClick={handleGenerate}
             disabled={loading}
-            className="px-8 py-3 bg-indigo-600 text-white rounded-xl font-bold"
+            className="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-semibold transition disabled:opacity-50"
           >
             {loading ? "Generating..." : "Generate Quiz"}
           </button>
         </div>
       </div>
+
+      {/* Start Quiz */}
       {currentQuiz && (
-        <div className="bg-white p-8 rounded-3xl border shadow">
+        <div className="bg-[#1e293b] p-8 rounded-2xl border border-slate-700 mt-8">
           <button
             onClick={() => setIsTakingQuiz(true)}
-            className="px-6 py-3 bg-green-600 text-white rounded-xl font-bold"
+            className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-semibold"
           >
             Start Attempt
           </button>
         </div>
       )}
+
+      {/* Attempt History */}
       {attempts.length > 0 && (
-        <div className="bg-white p-8 rounded-3xl border shadow">
-          <h2 className="text-lg font-bold mb-4">Attempt History</h2>
+        <div className="bg-[#1e293b] p-8 rounded-2xl border border-slate-700 mt-8">
+          <h2 className="text-lg font-semibold mb-6">Attempt History</h2>
 
           {attempts.map((a) => (
             <div
               key={a.id}
-              className="p-4 border rounded-xl mb-3 flex justify-between"
+              className="p-4 rounded-xl border border-slate-700 mb-4 flex justify-between items-center bg-[#0f172a]"
             >
               <div
                 className="cursor-pointer"
@@ -179,15 +175,17 @@ const QuizPage: React.FC<QuizPageProps> = ({ user }) => {
                   setLastAttempt((prev) => (prev?.id === a.id ? null : a))
                 }
               >
-                Attempt #{a.attempt_number} — Score:{" "}
-                <b>{a.score.toFixed(0)}%</b>
+                Attempt #{a.attempt_number} —{" "}
+                <span className="text-indigo-400 font-semibold">
+                  {a.score.toFixed(0)}%
+                </span>
               </div>
 
               {a.score >= 20 && (
                 <button
                   onClick={() => handleClaimCert(a.quiz_id)}
                   disabled={certLoading === a.quiz_id}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm"
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-sm"
                 >
                   Claim Certificate
                 </button>
@@ -196,34 +194,36 @@ const QuizPage: React.FC<QuizPageProps> = ({ user }) => {
           ))}
         </div>
       )}
+
+      {/* Detailed Review */}
       {lastAttempt && (
-        <div className="bg-white p-8 rounded-3xl border shadow mt-6">
-          <h2 className="text-lg font-bold mb-4">
+        <div className="bg-[#1e293b] p-8 rounded-2xl border border-slate-700 mt-8">
+          <h2 className="text-lg font-semibold mb-6">
             Detailed Review – Attempt #{lastAttempt.attempt_number}
           </h2>
 
           {lastAttempt.question_results.map((q, index) => (
             <div
               key={q.question_id}
-              className={`p-4 rounded-xl border mb-4 ${
+              className={`p-6 rounded-2xl border mb-6 ${
                 q.is_correct
-                  ? "bg-green-50 border-green-200"
-                  : "bg-red-50 border-red-200"
+                  ? "bg-emerald-900/20 border-emerald-700"
+                  : "bg-red-900/20 border-red-700"
               }`}
             >
-              <p className="font-semibold mb-2">
+              <p className="font-semibold mb-4">
                 {index + 1}. {q.question}
               </p>
 
               {q.options.map((opt: string, idx: number) => (
                 <div
                   key={idx}
-                  className={`p-2 rounded-md border mb-1 ${
+                  className={`p-3 rounded-xl border mb-2 ${
                     idx === q.correct_answer
-                      ? "bg-green-200 border-green-500"
+                      ? "bg-emerald-700/30 border-emerald-500"
                       : idx === q.selected_answer
-                        ? "bg-red-200 border-red-400"
-                        : "bg-white"
+                        ? "bg-red-700/30 border-red-500"
+                        : "bg-[#0f172a] border-slate-700"
                   }`}
                 >
                   {opt}

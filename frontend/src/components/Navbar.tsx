@@ -4,7 +4,7 @@ import { User } from "../types";
 interface NavbarProps {
   user: User;
   currentView: string;
-  onViewChange: (view: any) => void;
+  onViewChange: (view: string) => void;
   onLogout: () => void;
 }
 
@@ -15,52 +15,50 @@ const Navbar: React.FC<NavbarProps> = ({
   onLogout,
 }) => {
   const navItems = [
-    { id: "DASHBOARD", label: "Courses", icon: "fa-book" },
-    { id: "TOPICS", label: "Summaries", icon: "fa-file-alt" },
-    { id: "QUIZ_GEN", label: "Assessments", icon: "fa-tasks" },
-    { id: "ANALYTICS", label: "Analytics", icon: "fa-chart-line" },
-    { id: "CERTIFICATES", label: "Certificates", icon: "fa-award" },
+    { id: "DASHBOARD", label: "Dashboard" },
+    { id: "TOPICS", label: "Summaries" },
+    { id: "QUIZ_GEN", label: "Assessments" },
+    { id: "ANALYTICS", label: "Analytics" },
+    { id: "CERTIFICATES", label: "Certificates" },
   ];
 
   return (
-    <nav className="sticky top-0 z-40 w-full bg-white/80 backdrop-blur-md border-b border-slate-200">
-      <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+    <nav className="sticky top-0 z-50 bg-[#1e293b] border-b border-slate-700">
+      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         <div
-          className="flex items-center gap-2 cursor-pointer"
           onClick={() => onViewChange("DASHBOARD")}
+          className="cursor-pointer text-lg font-semibold text-indigo-400"
         >
-          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
-            <i className="fas fa-graduation-cap text-white text-lg"></i>
-          </div>
-          <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-            DidAct AI
-          </span>
+          DidactAI
         </div>
-        <div className="hidden lg:flex items-center gap-6 text-sm font-medium text-slate-600">
+
+        <div className="hidden md:flex items-center gap-8 text-sm">
           {navItems.map((item) => (
             <button
               key={item.id}
               onClick={() => onViewChange(item.id)}
-              className={
+              className={`transition-colors ${
                 currentView === item.id
-                  ? "text-blue-600 font-bold underline decoration-2 underline-offset-8"
-                  : "hover:text-blue-600"
-              }
+                  ? "text-indigo-400 font-semibold"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}
             >
               {item.label}
             </button>
           ))}
         </div>
+
         <div className="flex items-center gap-4">
-          <div className="text-right hidden sm:block">
-            <p className="text-sm font-semibold">{user.name}</p>
-            <p className="text-xs text-slate-500">{user.email}</p>
+          <div className="hidden sm:block text-right">
+            <p className="text-sm text-slate-200 font-medium">{user.name}</p>
+            <p className="text-xs text-slate-400">{user.email}</p>
           </div>
+
           <button
             onClick={onLogout}
-            className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center hover:bg-red-50 hover:text-red-600 transition-all"
+            className="px-3 py-2 text-xs rounded-xl bg-slate-700 hover:bg-red-600 hover:text-white transition-all"
           >
-            <i className="fas fa-sign-out-alt"></i>
+            Logout
           </button>
         </div>
       </div>

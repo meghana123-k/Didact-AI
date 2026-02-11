@@ -21,7 +21,6 @@ def get_user_analytics(user_id):
 
     topic_filter = request.args.get("topic_id")
 
-    # ✅ Proper SQL-level filtering
     attempts_query = (
         db.session.query(QuizAttempt)
         .join(Quiz, Quiz.id == QuizAttempt.quiz_id)
@@ -43,6 +42,8 @@ def get_user_analytics(user_id):
             "accuracyTrend": [],
             "weakConcepts": [],
             "difficultyBreakdown": [],
+            "overallScore": 0,
+            "performanceTier": "N/A",
             "integrityReport": {
                 "totalViolations": 0,
                 "suspiciousAttempts": 0,
@@ -51,6 +52,20 @@ def get_user_analytics(user_id):
             },
             "aiInsights": None
         }), 200
+
+    # ✅ Calculate overall score ONCE
+    overall_score = round(
+        sum(a.score for a in attempts) / len(attempts), 2
+    )
+
+    if overall_score >= 90:
+        performance_tier = "Expert"
+    elif overall_score >= 75:
+        performance_tier = "Advanced"
+    elif overall_score >= 60:
+        performance_tier = "Intermediate"
+    else:
+        performance_tier = "Needs Improvement"
 
     accuracy_trend = []
     concept_stats = {}
@@ -64,40 +79,24 @@ def get_user_analytics(user_id):
         if not quiz:
             continue
 
-        topic = quiz.topic
-
         accuracy_trend.append({
             "date": attempt.attempted_at.strftime("%Y-%m-%d"),
             "score": attempt.score,
-            "topic": topic.title
+            "topic": quiz.topic.title
         })
-        overall_score = round(
-            sum([a.score for a in attempts]) / len(attempts), 2
-        )
-        if overall_score >= 90:
-            performance_tier = "Expert"
-        elif overall_score >= 75:
-            performance_tier = "Advanced"
-        elif overall_score >= 60:
-            performance_tier = "Intermediate"
-        else:
-            performance_tier = "Needs Improvement"
 
-        # Integrity
         flags = json.loads(attempt.integrity_flags) if attempt.integrity_flags else []
         total_violations += len(flags)
         if len(flags) > 3:
             suspicious_count += 1
 
-        # Question-level analytics
         for r in attempt.question_results:
             concept = r.get("concept_tag", "general")
             difficulty = r.get("difficulty", "medium")
 
-            if concept not in concept_stats:
-                concept_stats[concept] = {"correct": 0, "total": 0}
-
+            concept_stats.setdefault(concept, {"correct": 0, "total": 0})
             concept_stats[concept]["total"] += 1
+
             if r.get("is_correct"):
                 concept_stats[concept]["correct"] += 1
 
@@ -106,91 +105,56 @@ def get_user_analytics(user_id):
                     1 if r.get("is_correct") else 0
                 )
 
-
-    weak_concepts = []
-
-    for concept, stats in concept_stats.items():
-        if stats["total"] >= 3:
-            score = round((stats["correct"] / stats["total"]) * 100, 2)
-            weak_concepts.append({
-                "concept": concept,
-                "score": score,
-                "totalQuestions": stats["total"]
-            })
+    # Weak Concepts
+    weak_concepts = [
+        {
+            "concept": c,
+            "score": round((s["correct"] / s["total"]) * 100, 2),
+            "totalQuestions": s["total"]
+        }
+        for c, s in concept_stats.items()
+        if s["total"] >= 3 and (s["correct"] / s["total"]) * 100 < 80
+    ]
 
     weak_concepts.sort(key=lambda x: x["score"])
-    weak_concepts = [wc for wc in weak_concepts if wc["score"] < 80]
 
+    # Difficulty Breakdown
+    diff_breakdown = [
+        {
+            "difficulty": d,
+            "score": round((sum(v) / len(v)) * 100, 2) if v else 0
+        }
+        for d, v in difficulty_stats.items()
+    ]
 
-    diff_breakdown = []
-    for difficulty, values in difficulty_stats.items():
-        if values:
-            score = round((sum(values) / len(values)) * 100, 2)
-        else:
-            score = 0
-
-        diff_breakdown.append({
-            "difficulty": difficulty,
-            "score": score
-        })
-
-   
-
+    # Suggestions
     suggestions = []
-    resources = []
 
-    # HIGH PERFORMANCE CASE
     if overall_score >= 90:
         suggestions.append(
-            f"Outstanding performance in {topic.title if topic_filter else 'all topics'}. "
-            "You are operating at an expert level."
+            "Outstanding mastery detected. Begin advanced-level problem solving."
         )
-        suggestions.append(
-            "Start solving advanced problem sets or real-world case studies."
-        )
-
     elif overall_score >= 75:
         suggestions.append(
-            "Strong performance. Push into advanced difficulty consistently."
+            "Strong performance. Increase exposure to hard-level questions."
         )
-
     elif weak_concepts:
         worst = weak_concepts[0]
         suggestions.append(
             f"You are struggling with '{worst['concept']}' "
-            f"(accuracy {worst['score']}%). Focus revision here first."
+            f"(accuracy {worst['score']}%). Prioritize this concept."
         )
-
-    # Difficulty instability
-    unstable = [d for d in diff_breakdown if d["score"] < 60]
-    if unstable:
-        suggestions.append(
-            "Your difficulty handling is unstable. Practice mixed-difficulty timed quizzes."
-        )
-
-    # Integrity insight
-    if suspicious_count > 0:
-        suggestions.append(
-            "Integrity flags detected. Stay focused to build exam resilience."
-        )
-
-    # Fallback
-    if not suggestions:
+    else:
         suggestions.append(
             "Consistent learning pattern detected. Maintain discipline."
         )
 
+    if suspicious_count > 0:
+        suggestions.append(
+            "Integrity flags detected. Stay focused during assessments."
+        )
 
-    # Fallback resource if nothing added
-    if not resources:
-        resources.append({
-            "title": "Active Recall Strategy",
-            "type": "article",
-            "url": "https://www.coursera.org/articles/study-techniques"
-        })
-
-  
-
+    # Available Topics
     topic_ids = set()
     available_topics = []
 
@@ -203,25 +167,24 @@ def get_user_analytics(user_id):
                 "name": quiz.topic.title
             })
 
-
     return jsonify({
-    "availableTopics": available_topics,
-    "accuracyTrend": accuracy_trend,
-    "weakConcepts": weak_concepts[:5],
-    "difficultyBreakdown": diff_breakdown,
-    "overallScore": overall_score,
-    "performanceTier": performance_tier,
-    "integrityReport": {
-        "totalViolations": total_violations,
-        "suspiciousAttempts": suspicious_count,
-        "tabSwitches": total_violations // 2,
-        "windowBlurs": total_violations // 2,
-    },
-    "aiInsights": {
-        "suggestions": suggestions,
-        "recommendedResources": []
-    }
-}), 200
+        "availableTopics": available_topics,
+        "accuracyTrend": accuracy_trend,
+        "weakConcepts": weak_concepts[:5],
+        "difficultyBreakdown": diff_breakdown,
+        "overallScore": overall_score,
+        "performanceTier": performance_tier,
+        "integrityReport": {
+            "totalViolations": total_violations,
+            "suspiciousAttempts": suspicious_count,
+            "tabSwitches": total_violations // 2,
+            "windowBlurs": total_violations // 2,
+        },
+        "aiInsights": {
+            "suggestions": suggestions,
+            "recommendedResources": []
+        }
+    }), 200
 
 @analytics_bp.route("/recommendation/<concept>", methods=["GET"])
 @jwt_required()

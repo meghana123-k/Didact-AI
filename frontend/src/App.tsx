@@ -30,7 +30,6 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>(View.LOGIN);
   const [loading, setLoading] = useState(true);
 
-  // ✅ Auto-login if token exists
   useEffect(() => {
     const token = localStorage.getItem("token");
 
@@ -51,14 +50,12 @@ const App: React.FC = () => {
     }
   }, []);
 
-  // ✅ Login success handler
   const handleAuthSuccess = (user: User, token: string) => {
     localStorage.setItem("token", token);
     setCurrentUser(user);
     setCurrentView(View.DASHBOARD);
   };
 
-  // ✅ Logout handler
   const handleLogout = () => {
     localStorage.removeItem("token");
     logoutUser();
@@ -66,21 +63,20 @@ const App: React.FC = () => {
     setCurrentView(View.LOGIN);
   };
 
-  // ✅ Loading Screen
+  // =========================
+  // Dark Loading Screen
+  // =========================
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen flex items-center justify-center bg-[#0f172a] text-slate-200">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-slate-500 font-medium">
-            Initializing DidAct AI...
-          </p>
+          <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-slate-400 font-medium">Initializing DidactAI...</p>
         </div>
       </div>
     );
   }
 
-  // ✅ Auth Pages Renderer
   const renderAuth = () =>
     currentView === View.SIGNUP ? (
       <Signup
@@ -95,8 +91,10 @@ const App: React.FC = () => {
     );
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
-      {/* ✅ Navbar only after login */}
+    <div className="min-h-screen flex flex-col bg-[#0f172a] text-slate-100">
+      {/* =========================
+          Navbar (Only if logged in)
+      ========================= */}
       {currentUser && (
         <Navbar
           user={currentUser}
@@ -106,27 +104,29 @@ const App: React.FC = () => {
         />
       )}
 
-      {/* ✅ Main Content */}
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 py-8">
+      {/* =========================
+          Full Width Main Content
+      ========================= */}
+      <main className="flex-1 w-full bg-[#0f172a]">
         <ProtectedRoute isAuthenticated={!!currentUser} fallback={renderAuth()}>
           {currentView === View.DASHBOARD && <Dashboard />}
-
           {currentView === View.TOPICS && <UploadTopic user={currentUser!} />}
-
           {currentView === View.QUIZ_GEN && <QuizPage user={currentUser!} />}
-
           {currentView === View.ANALYTICS && (
             <AnalyticsPage user={currentUser!} />
           )}
-
           {currentView === View.CERTIFICATES && <CertificatePage />}
         </ProtectedRoute>
       </main>
 
-      {/* ✅ Footer */}
-      <footer className="bg-white border-t border-slate-200 py-6 mt-12 text-center text-slate-400 text-sm">
-        &copy; 2026 DidAct AI — Intelligent Learning Insights Platform
-      </footer>
+      {/* =========================
+          Footer (Dark)
+      ========================= */}
+      {currentUser && (
+        <footer className="bg-[#0f172a] border-t border-slate-800 py-6 text-center text-slate-500 text-sm">
+          © 2026 DidactAI — Intelligent Learning Insights Platform
+        </footer>
+      )}
     </div>
   );
 };
