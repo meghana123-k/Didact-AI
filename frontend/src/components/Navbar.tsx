@@ -23,15 +23,28 @@ const Navbar: React.FC<NavbarProps> = ({
   ];
 
   return (
-    <nav className="sticky top-0 z-50 bg-[#1e293b] border-b border-slate-700">
+    <nav className="sticky top-0 z-50 bg-[#111827] border-b border-slate-800 backdrop-blur">
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+        {/* ===== LOGO ===== */}
         <div
           onClick={() => onViewChange("DASHBOARD")}
-          className="cursor-pointer text-lg font-semibold text-indigo-400"
+          className="flex items-center gap-3 cursor-pointer group"
         >
-          DidactAI
+          {/* Logo Icon */}
+          <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center shadow-md">
+            <i className="fas fa-brain text-white text-sm"></i>
+          </div>
+
+          {/* Logo Text */}
+          <div className="text-lg font-semibold tracking-tight">
+            <span className="text-slate-100 group-hover:text-indigo-400 transition">
+              Didact
+            </span>
+            <span className="text-indigo-400 font-bold ml-1">AI</span>
+          </div>
         </div>
 
+        {/* ===== NAV LINKS ===== */}
         <div className="hidden md:flex items-center gap-8 text-sm">
           {navItems.map((item) => (
             <button
@@ -48,6 +61,7 @@ const Navbar: React.FC<NavbarProps> = ({
           ))}
         </div>
 
+        {/* ===== USER SECTION ===== */}
         <div className="flex items-center gap-4">
           <div className="hidden sm:block text-right">
             <p className="text-sm text-slate-200 font-medium">{user.name}</p>

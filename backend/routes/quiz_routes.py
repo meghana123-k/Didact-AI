@@ -6,13 +6,17 @@ from models.quiz import Quiz
 from models.question import Question
 from models.attempt import QuizAttempt
 from models.topic import Topic
-
+from models.certificate import Certificate
+from models.user import User
+from routes.certificate_routes import _build_file_path, _generate_certificate  # adjust import if needed
+import uuid
 from datetime import datetime, timedelta
 import json
 import os
 from dotenv import load_dotenv
 from google import genai
 from transformers import pipeline
+from flask import current_app
 load_dotenv()
 
 quiz_bp = Blueprint("quiz", __name__)
@@ -271,12 +275,11 @@ def generate_quiz(topic_id):
     return jsonify(quiz.to_dict()), 201
 
 
-# ======================
-# ✅ Submit Attempt
-# ======================
+
 @quiz_bp.route("/attempt", methods=["POST"])
 @jwt_required()
 def submit_attempt():
+
     user_id = get_jwt_identity()
     data = request.get_json()
 
@@ -287,34 +290,17 @@ def submit_attempt():
 
     quiz = Quiz.query.get(quiz_id)
     if not quiz:
-        return jsonify({"error": "Quiz not found", "status": 404}), 404
-    
+        return jsonify({"error": "Quiz not found"}), 404
+
     attempt_count = (
-    db.session.query(QuizAttempt)
-    .join(Quiz)
-    .filter(
-        Quiz.topic_id == quiz.topic_id,
-        QuizAttempt.user_id == user_id
+        db.session.query(QuizAttempt)
+        .join(Quiz)
+        .filter(
+            Quiz.topic_id == quiz.topic_id,
+            QuizAttempt.user_id == user_id
+        )
+        .count()
     )
-    .count()
-)
-
-
-    attempt_number = attempt_count + 1
-
-
-    print("Topic:", quiz.topic_id)
-    print("Existing attempts:", attempt_count)
-
-    if attempt_count >= 10:
-        last = max(attempt_count, key=lambda x: x.attempted_at)
-        cooldown = last.attempted_at + timedelta(minutes=30)
-        if datetime.utcnow() < cooldown:
-            return jsonify({
-                "error": "Attempt limit reached",
-                "status": 429,
-                "retry_after": int((cooldown - datetime.utcnow()).total_seconds())
-            }), 429
 
     questions = Question.query.filter_by(quiz_id=quiz_id).all()
 
@@ -340,14 +326,16 @@ def submit_attempt():
         })
 
     score = round((correct / len(questions)) * 100, 2) if questions else 0.0
+    MIN_SCORE = current_app.config.get("CERT_MIN_SCORE", 75)
+    passed = score >= MIN_SCORE
 
     attempt = QuizAttempt(
         quiz_id=quiz_id,
         user_id=user_id,
-        attempt_number= attempt_count + 1,
+        attempt_number=attempt_count + 1,
         score=score,
         answers_json=json.dumps(answers),
-        question_results=question_results,
+        question_results=json.dumps(question_results),  # ✅ FIXED
         time_taken_seconds=time_taken,
         integrity_flags=json.dumps(integrity_flags),
     )
@@ -357,9 +345,54 @@ def submit_attempt():
         db.session.commit()
     except Exception as e:
         db.session.rollback()
-        return jsonify({"error": str(e), "status": 500}), 500
+        return jsonify({"error": str(e)}), 500
 
-    return jsonify(attempt.to_dict()), 201
+    certificate_data = None
+
+    if passed:
+        user = User.query.get(user_id)
+
+        old_certs = Certificate.query.filter_by(
+            user_id=user_id,
+            quiz_id=quiz_id
+        ).all()
+
+        for cert in old_certs:
+            if cert.file_path and os.path.exists(cert.file_path):
+                os.remove(cert.file_path)
+            db.session.delete(cert)
+
+        db.session.commit()
+
+        cert_uid = f"CERT-{uuid.uuid4().hex[:8].upper()}"
+
+        new_cert = Certificate(
+            user_id=user_id,
+            quiz_id=quiz_id,
+            certificate_uid=cert_uid,
+            score=score,
+            issued_at=datetime.utcnow()
+        )
+
+        try:
+            path = _build_file_path(cert_uid)
+            _generate_certificate(new_cert, user, quiz, path)
+            new_cert.file_path = path
+
+            db.session.add(new_cert)
+            db.session.commit()
+
+            certificate_data = new_cert.to_dict()
+
+        except Exception as e:
+            db.session.rollback()
+            print("Certificate generation error:", e)
+
+    response = attempt.to_dict()
+    response["passed"] = passed
+    response["certificate"] = certificate_data
+
+    return jsonify(response), 201
 
 
 

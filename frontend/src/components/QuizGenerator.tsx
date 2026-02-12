@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { topicService } from "../services/topicService";
 import { quizService } from "../services/quizService";
-import { certificateService } from "../services/certificateService";
 import { Topic, User, Quiz, QuizAttempt } from "../types";
 import QuizAttemptSession from "./QuizAttemptSession";
-
 interface QuizGeneratorProps {
   user: User;
 }
@@ -23,57 +21,74 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ user }) => {
 
   const token = localStorage.getItem("token") || "";
 
+  /* -------------------- LOAD TOPICS -------------------- */
   useEffect(() => {
+    const loadTopics = async () => {
+      try {
+        const history = await topicService.getHistory(user.id, token);
+        setTopics(history);
+      } catch (err) {
+        console.error("Failed to load topics");
+      }
+    };
+
     loadTopics();
-  }, []);
+  }, [user.id, token]);
 
-  const loadTopics = async () => {
-    const history = await topicService.getHistory(user.id, token);
-    setTopics(history);
-  };
-
+  /* -------------------- LOAD ATTEMPTS -------------------- */
   const loadHistory = async (quizId: string) => {
-    const history = await quizService.getAttemptHistory(quizId, token);
-    setAttempts(history);
+    try {
+      const history = await quizService.getAttemptHistory(quizId, token);
+      setAttempts(history);
+    } catch (err) {
+      console.error("Failed to load attempts");
+    }
   };
 
+  /* -------------------- GENERATE QUIZ -------------------- */
   const handleGenerate = async () => {
-    if (!selectedTopicId) return setError("Select topic");
+    if (!selectedTopicId) {
+      setError("Please select a topic.");
+      return;
+    }
 
     setLoading(true);
     setError("");
     setSelectedAttempt(null);
+    setIsTakingQuiz(false);
 
     try {
       const quiz = await quizService.generate(selectedTopicId, token);
       setCurrentQuiz(quiz);
       await loadHistory(quiz.id);
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || "Failed to generate quiz.");
     } finally {
       setLoading(false);
     }
   };
 
-  // If actively taking quiz
-  if (isTakingQuiz && currentQuiz) {
-    return (
-      <QuizAttemptSession
-        quiz={currentQuiz}
-        user={user}
-        onComplete={async (attempt) => {
-          setIsTakingQuiz(false);
-          setSelectedAttempt(attempt);
-          await loadHistory(attempt.quiz_id);
-        }}
-        onCancel={() => setIsTakingQuiz(false)}
-      />
-    );
-  }
+  /* -------------------- VIEW ATTEMPT -------------------- */
+  const handleSelectAttempt = (attempt: QuizAttempt) => {
+    setIsTakingQuiz(false);
+    setSelectedAttempt(attempt);
+  };
+
+  /* -------------------- START ATTEMPT -------------------- */
+  const handleStartAttempt = () => {
+    setSelectedAttempt(null);
+    setIsTakingQuiz(true);
+  };
+
+  /* -------------------- BACK TO GENERATOR -------------------- */
+  const resetToGenerator = () => {
+    setSelectedAttempt(null);
+    setIsTakingQuiz(false);
+  };
 
   return (
     <div className="flex h-[calc(100vh-80px)] bg-[#0f172a] text-slate-100">
-      {/* LEFT SIDEBAR - Attempts */}
+      {/* -------------------- LEFT SIDEBAR -------------------- */}
       <aside className="w-80 border-r border-slate-800 bg-[#111827] p-4 overflow-y-auto">
         <h3 className="text-sm uppercase tracking-wide text-slate-400 mb-4">
           Assessment History
@@ -86,7 +101,7 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ user }) => {
         {attempts.map((a) => (
           <button
             key={a.id}
-            onClick={() => setSelectedAttempt(a)}
+            onClick={() => handleSelectAttempt(a)}
             className={`w-full text-left p-4 rounded-xl mb-2 transition ${
               selectedAttempt?.id === a.id
                 ? "bg-slate-700"
@@ -101,28 +116,45 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ user }) => {
                 {a.score.toFixed(0)}%
               </span>
             </div>
-            <p className="text-xs text-slate-500 mt-1">Click to review</p>
           </button>
         ))}
       </aside>
 
-      {/* CENTER PANEL */}
+      {/* -------------------- RIGHT PANEL -------------------- */}
       <main className="flex-1 p-10 overflow-y-auto">
-        {/* If review selected */}
-        {selectedAttempt && (
+        {/* 1️⃣ Taking Quiz */}
+        {isTakingQuiz && currentQuiz && (
+          <QuizAttemptSession
+            quiz={currentQuiz}
+            user={user}
+            onComplete={async (attempt) => {
+              setIsTakingQuiz(false);
+              setSelectedAttempt(attempt);
+              await loadHistory(attempt.quiz_id);
+
+              if (attempt.passed) {
+                onNavigate("CERTIFICATES");
+              }
+            }}
+            onCancel={resetToGenerator}
+          />
+        )}
+
+        {/* 2️⃣ Reviewing Attempt */}
+        {!isTakingQuiz && selectedAttempt && (
           <div className="max-w-4xl mx-auto">
             <button
-              onClick={() => setSelectedAttempt(null)}
+              onClick={resetToGenerator}
               className="text-sm text-indigo-400 mb-6"
             >
-              ← Back to Generator
+              ← Back
             </button>
 
             <h2 className="text-2xl font-semibold mb-6">Detailed Review</h2>
 
             <div className="p-6 rounded-2xl bg-[#1e293b] border border-slate-700 mb-8">
-              Final Score:{" "}
-              <span className="text-indigo-400 font-bold">
+              Final Score:
+              <span className="text-indigo-400 font-bold ml-2">
                 {selectedAttempt.score.toFixed(0)}%
               </span>
             </div>
@@ -165,8 +197,8 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ user }) => {
           </div>
         )}
 
-        {/* If no review selected */}
-        {!selectedAttempt && (
+        {/* 3️⃣ Generator View */}
+        {!isTakingQuiz && !selectedAttempt && (
           <div className="max-w-3xl mx-auto space-y-8">
             <h2 className="text-2xl font-semibold">
               Generate Mastery Assessment
@@ -204,7 +236,7 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ user }) => {
                 </h3>
 
                 <button
-                  onClick={() => setIsTakingQuiz(true)}
+                  onClick={handleStartAttempt}
                   className="px-6 py-3 bg-emerald-600 rounded-xl font-semibold hover:bg-emerald-500"
                 >
                   Start Attempt

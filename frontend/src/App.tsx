@@ -111,7 +111,13 @@ const App: React.FC = () => {
         <ProtectedRoute isAuthenticated={!!currentUser} fallback={renderAuth()}>
           {currentView === View.DASHBOARD && <Dashboard />}
           {currentView === View.TOPICS && <UploadTopic user={currentUser!} />}
-          {currentView === View.QUIZ_GEN && <QuizPage user={currentUser!} />}
+          {currentView === View.QUIZ_GEN && (
+            <QuizPage
+              user={currentUser!}
+              onNavigate={(view) => setCurrentView(view)}
+            />
+          )}
+
           {currentView === View.ANALYTICS && (
             <AnalyticsPage user={currentUser!} />
           )}

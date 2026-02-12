@@ -14,25 +14,6 @@ const Dashboard: React.FC = () => {
         </p>
       </div>
 
-      {/* Analytics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {[
-          { title: "Overall Accuracy", value: "84%", color: "text-emerald-400" },
-          { title: "Weak Concepts", value: "3", color: "text-amber-400" },
-          { title: "Mastery Level", value: "Intermediate", color: "text-indigo-400" },
-        ].map((item) => (
-          <div
-            key={item.title}
-            className="bg-[#1e293b] p-6 rounded-2xl border border-slate-800"
-          >
-            <p className="text-sm text-slate-400">{item.title}</p>
-            <p className={`text-2xl font-semibold mt-2 ${item.color}`}>
-              {item.value}
-            </p>
-          </div>
-        ))}
-      </div>
-
       {/* Feature Modules */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <FeatureCard

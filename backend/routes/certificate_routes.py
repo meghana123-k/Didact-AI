@@ -124,7 +124,7 @@ def generate_certificate(quiz_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
-
+    
 
 @certificate_bp.route('/download/<cert_uid>')
 def download_certificate(cert_uid):
@@ -149,5 +149,5 @@ def get_my_certificates():
 
     certs = Certificate.query.filter_by(user_id=user_id)\
         .order_by(Certificate.issued_at.desc()).all()
-
+    
     return jsonify([c.to_dict() for c in certs])

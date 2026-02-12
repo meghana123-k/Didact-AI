@@ -53,7 +53,6 @@ def get_user_analytics(user_id):
             "aiInsights": None
         }), 200
 
-    # ✅ Calculate overall score ONCE
     overall_score = round(
         sum(a.score for a in attempts) / len(attempts), 2
     )
@@ -70,8 +69,12 @@ def get_user_analytics(user_id):
     accuracy_trend = []
     concept_stats = {}
     difficulty_stats = {"easy": [], "medium": [], "hard": []}
+
     total_violations = 0
     suspicious_count = 0
+    tab_switch_count = 0
+    window_blur_count = 0
+
 
     for attempt in attempts:
 
@@ -86,13 +89,25 @@ def get_user_analytics(user_id):
         })
 
         flags = json.loads(attempt.integrity_flags) if attempt.integrity_flags else []
+
         total_violations += len(flags)
+
+        for f in flags:
+            if f == "tab_switch":
+                tab_switch_count += 1
+            elif f == "window_blur":
+                window_blur_count += 1
+
         if len(flags) > 3:
             suspicious_count += 1
 
         for r in attempt.question_results:
-            concept = r.get("concept_tag", "general")
+            raw_concept = r.get("concept_tag", "general").strip().lower()
             difficulty = r.get("difficulty", "medium")
+
+
+            tokens = raw_concept.split()
+            concept = " ".join(tokens[:2]) if len(tokens) >= 2 else raw_concept
 
             concept_stats.setdefault(concept, {"correct": 0, "total": 0})
             concept_stats[concept]["total"] += 1
@@ -105,20 +120,26 @@ def get_user_analytics(user_id):
                     1 if r.get("is_correct") else 0
                 )
 
-    # Weak Concepts
-    weak_concepts = [
-        {
-            "concept": c,
-            "score": round((s["correct"] / s["total"]) * 100, 2),
-            "totalQuestions": s["total"]
-        }
-        for c, s in concept_stats.items()
-        if s["total"] >= 3 and (s["correct"] / s["total"]) * 100 < 80
-    ]
+
+    weak_concepts = []
+
+    for c, s in concept_stats.items():
+        if s["total"] == 0:
+            continue
+
+        accuracy = (s["correct"] / s["total"]) * 100
+
+       
+        if accuracy < 80:
+            weak_concepts.append({
+                "concept": c,
+                "score": round(accuracy, 2),
+                "totalQuestions": s["total"]
+            })
 
     weak_concepts.sort(key=lambda x: x["score"])
 
-    # Difficulty Breakdown
+  
     diff_breakdown = [
         {
             "difficulty": d,
@@ -127,8 +148,15 @@ def get_user_analytics(user_id):
         for d, v in difficulty_stats.items()
     ]
 
-    # Suggestions
+   
     suggestions = []
+
+    if weak_concepts:
+        worst = weak_concepts[0]
+        suggestions.append(
+            f"You are struggling with '{worst['concept']}' "
+            f"(accuracy {worst['score']}%). Prioritize this concept."
+        )
 
     if overall_score >= 90:
         suggestions.append(
@@ -138,15 +166,9 @@ def get_user_analytics(user_id):
         suggestions.append(
             "Strong performance. Increase exposure to hard-level questions."
         )
-    elif weak_concepts:
-        worst = weak_concepts[0]
+    elif overall_score < 60:
         suggestions.append(
-            f"You are struggling with '{worst['concept']}' "
-            f"(accuracy {worst['score']}%). Prioritize this concept."
-        )
-    else:
-        suggestions.append(
-            "Consistent learning pattern detected. Maintain discipline."
+            "Revisit fundamentals before progressing further."
         )
 
     if suspicious_count > 0:
@@ -154,7 +176,7 @@ def get_user_analytics(user_id):
             "Integrity flags detected. Stay focused during assessments."
         )
 
-    # Available Topics
+    
     topic_ids = set()
     available_topics = []
 
@@ -177,36 +199,11 @@ def get_user_analytics(user_id):
         "integrityReport": {
             "totalViolations": total_violations,
             "suspiciousAttempts": suspicious_count,
-            "tabSwitches": total_violations // 2,
-            "windowBlurs": total_violations // 2,
+            "tabSwitches": tab_switch_count,
+            "windowBlurs": window_blur_count,
         },
         "aiInsights": {
             "suggestions": suggestions,
             "recommendedResources": []
         }
     }), 200
-
-@analytics_bp.route("/recommendation/<concept>", methods=["GET"])
-@jwt_required()
-def get_recommendation(concept):
-
-    topic_id = request.args.get("topic_id")
-
-    topic_name = ""
-    if topic_id:
-        topic = Topic.query.get(topic_id)
-        if topic:
-            topic_name = topic.title
-
-    query = f"{topic_name} {concept} explained clearly for beginners"
-
-    video = fetch_youtube_video(query)
-
-    if not video:
-        video = {
-            "title": f"Learn {concept}",
-            "type": "search",
-            "url": f"https://www.google.com/search?q={concept}+explained"
-        }
-
-    return jsonify(video), 200
