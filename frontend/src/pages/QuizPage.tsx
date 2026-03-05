@@ -3,14 +3,13 @@ import { User, Topic, Quiz, QuizAttempt } from "../types";
 import { topicService } from "../services/topicService";
 import { quizService } from "../services/quizService";
 import QuizAttemptSession from "../components/QuizAttemptSession";
-import { View } from "../App";
+import { useNavigate } from "react-router-dom";
 
 interface QuizPageProps {
   user: User;
-  onNavigate: (view: View) => void;
 }
 
-const QuizPage: React.FC<QuizPageProps> = ({ user, onNavigate }) => {
+const QuizPage: React.FC<QuizPageProps> = ({ user }) => {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [selectedTopicId, setSelectedTopicId] = useState("");
   const [loading, setLoading] = useState(false);
@@ -23,7 +22,7 @@ const QuizPage: React.FC<QuizPageProps> = ({ user, onNavigate }) => {
   const [error, setError] = useState("");
 
   const token = localStorage.getItem("token") || "";
-
+  const navigate = useNavigate();
   useEffect(() => {
     const loadTopics = async () => {
       try {
@@ -154,7 +153,7 @@ const QuizPage: React.FC<QuizPageProps> = ({ user, onNavigate }) => {
               setAttempts(history);
 
               if (attempt.score >= 75) {
-                onNavigate(View.CERTIFICATES);
+                navigate("/certificates");
               }
             }}
             onCancel={resetToGenerator}

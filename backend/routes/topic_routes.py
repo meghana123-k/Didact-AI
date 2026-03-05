@@ -18,27 +18,25 @@ topic_bp = Blueprint("topic", __name__)
 # ===========================
 # ✅ Gemini Client (primary)
 # ===========================
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-if not GEMINI_API_KEY:
-    print("WARNING: GEMINI_API_KEY not set. Gemini summarization will be skipped.")
+GEMINI_SUMMARY_KEY = os.getenv("GEMINI_SUMMARY_KEY")
+if not GEMINI_SUMMARY_KEY:
+    print("WARNING: GEMINI_SUMMARY_KEY not set. Gemini summarization will be skipped.")
 
-gemini_client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
+gemini_client = genai.Client(api_key=GEMINI_SUMMARY_KEY) if GEMINI_SUMMARY_KEY else None
 
 # ===========================
 # ✅ HuggingFace Fallback (lightweight, safe defaults)
 # ===========================
 # Use a smaller FLAN-T5 variant to reduce memory pressure on local machines.
-HF_MODEL_NAME = os.getenv("HF_SUMMARY_MODEL", "google/flan-t5-large")
+# HF_MODEL_NAME = os.getenv("HF_SUMMARY_MODEL", "google/flan-t5-small")
+HF_MODEL_NAME = os.getenv("HF_SUMMARY_MODEL", "sshleifer/distilbart-cnn-12-6")
 _hf_summarizer = None
 
 
 def get_hf_summarizer():
     global _hf_summarizer
     if _hf_summarizer is None:
-        _hf_summarizer = pipeline(
-            "text2text-generation",
-            model=HF_MODEL_NAME,
-        )
+        _hf_summarizer = pipeline("summarization", model=HF_MODEL_NAME)
     return _hf_summarizer
 
 
@@ -121,7 +119,7 @@ def build_prompt(text, mode):
 
 
 
-def normalize_to_word_range(text: str, min_words: int = 1500, max_words: int = 2500) -> str:
+def normalize_to_word_range(text: str, min_words: int = 200, max_words: int = 500) -> str:
     """
     Post-process model output to satisfy the strict 1500–2500 word requirement.
     If the model under-shoots, we keep the text but note it's best-effort rather than
@@ -173,7 +171,7 @@ def summarize_topic():
 
     if gemini_client:
         try:
-            prompt = build_prompt(extracted_text[:8000], mode)
+            prompt = build_prompt(extracted_text[:1500], mode)
             response = gemini_client.models.generate_content(
                 model="gemini-flash-latest",
                 contents=prompt,
@@ -195,16 +193,26 @@ def summarize_topic():
         try:
             # Truncate to ~1500 chars (~300–400 tokens) to stay well under limits
             truncated_text = extracted_text[:1500]
-            prompt = build_prompt(truncated_text, mode)
+            prompt = f"""
+                Explain the following topic for students.
+
+                Use sections:
+                - Definition
+                - Key Properties
+                - Comparison
+
+                Topic:
+                {truncated_text}
+                """
             hf_summarizer = get_hf_summarizer()
             raw = hf_summarizer(
-                prompt,
-                max_length=512,   # output length cap
-                min_length=200,
-                do_sample=False,
-                truncation=True,  # let transformers truncate if still too long
+                truncated_text,
+                max_length=300,
+                min_length=120,
+                do_sample=False
             )
-            summary_text = raw[0]["generated_text"].strip()
+
+            summary_text = raw[0]["summary_text"].strip()
             summary = normalize_to_word_range(summary_text)
         except Exception as e:
             # If this was a Gemini quota issue, expose that clearly

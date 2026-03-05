@@ -24,16 +24,16 @@ quiz_bp = Blueprint("quiz", __name__)
 # ======================
 # ✅ Gemini Quiz Generator (primary)
 # ======================
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-if not GEMINI_API_KEY:
-    print("WARNING: GEMINI_API_KEY not set. Gemini quiz generation will be skipped.")
+GEMINI_QUIZ_KEY = os.getenv("GEMINI_QUIZ_KEY")
+if not GEMINI_QUIZ_KEY:
+    print("WARNING: GEMINI_QUIZ_KEY not set. Gemini quiz generation will be skipped.")
 
-gemini_client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
+gemini_client = genai.Client(api_key=GEMINI_QUIZ_KEY) if GEMINI_QUIZ_KEY else None
 
 # ======================
 # ✅ HuggingFace Fallback (lightweight, safe defaults)
 # ======================
-HF_QUIZ_MODEL_NAME = os.getenv("HF_QUIZ_MODEL", "google/flan-t5-large")
+HF_QUIZ_MODEL_NAME = os.getenv("HF_QUIZ_MODEL", "google/flan-t5-base")
 _hf_quiz_generator = None
 
 

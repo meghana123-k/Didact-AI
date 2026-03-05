@@ -74,7 +74,15 @@ def create_app():
     @app.errorhandler(404)
     def not_found(e):
         return jsonify({"error": "Resource not found", "status": 404}), 404
-
+    @app.route("/")
+    def home():
+        return {
+            "message": "DidactAI Backend Running",
+            "status": "OK"
+        }
+    @app.route("/api")
+    def api_root():
+        return {"message": "DidactAI API root"}
     return app
 
 

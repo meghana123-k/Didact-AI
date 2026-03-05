@@ -1,41 +1,37 @@
 import React from "react";
+import { NavLink, useNavigate } from "react-router-dom";
 import { User } from "../types";
 
 interface NavbarProps {
   user: User;
-  currentView: string;
-  onViewChange: (view: string) => void;
   onLogout: () => void;
 }
 
-const Navbar: React.FC<NavbarProps> = ({
-  user,
-  currentView,
-  onViewChange,
-  onLogout,
-}) => {
+const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
+  const navigate = useNavigate();
+
   const navItems = [
-    { id: "DASHBOARD", label: "Dashboard" },
-    { id: "TOPICS", label: "Summaries" },
-    { id: "QUIZ_GEN", label: "Assessments" },
-    { id: "ANALYTICS", label: "Analytics" },
-    { id: "CERTIFICATES", label: "Certificates" },
+    { path: "/", label: "Dashboard" },
+    { path: "/summaries", label: "Summaries" },
+    { path: "/assessments", label: "Assessments" },
+    { path: "/analytics", label: "Analytics" },
+    { path: "/certificates", label: "Certificates" },
+    { path: "/about", label: "About" }
   ];
 
   return (
     <nav className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         {/* ===== LOGO ===== */}
+
         <div
-          onClick={() => onViewChange("DASHBOARD")}
+          onClick={() => navigate("/")}
           className="flex items-center gap-3 cursor-pointer group"
         >
-          {/* Logo Icon */}
           <div className="w-9 h-9 rounded-lg bg-indigo-600 flex items-center justify-center shadow-sm">
             <i className="fas fa-book-open text-white text-sm"></i>
           </div>
 
-          {/* Logo Text */}
           <div className="text-lg font-semibold tracking-tight">
             <span className="text-gray-800 group-hover:text-indigo-600 transition">
               Didact
@@ -45,28 +41,35 @@ const Navbar: React.FC<NavbarProps> = ({
         </div>
 
         {/* ===== NAV LINKS ===== */}
+
         <div className="hidden md:flex items-center gap-8 text-sm font-medium">
           {navItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => onViewChange(item.id)}
-              className={`relative transition-colors ${
-                currentView === item.id
-                  ? "text-indigo-600"
-                  : "text-gray-600 hover:text-indigo-600"
-              }`}
+            <NavLink
+              key={item.path}
+              to={item.path}
+              className={({ isActive }) =>
+                `relative transition-colors ${
+                  isActive
+                    ? "text-indigo-600"
+                    : "text-gray-600 hover:text-indigo-600"
+                }`
+              }
             >
-              {item.label}
+              {({ isActive }) => (
+                <>
+                  {item.label}
 
-              {/* Active underline */}
-              {currentView === item.id && (
-                <span className="absolute left-0 -bottom-2 w-full h-[2px] bg-indigo-600 rounded-full"></span>
+                  {isActive && (
+                    <span className="absolute left-0 -bottom-2 w-full h-[2px] bg-indigo-600 rounded-full"></span>
+                  )}
+                </>
               )}
-            </button>
+            </NavLink>
           ))}
         </div>
 
         {/* ===== USER SECTION ===== */}
+
         <div className="flex items-center gap-4">
           <div className="hidden sm:block text-right">
             <p className="text-sm text-gray-800 font-semibold">{user.name}</p>
@@ -77,7 +80,7 @@ const Navbar: React.FC<NavbarProps> = ({
             onClick={onLogout}
             className="px-4 py-2 text-xs rounded-lg border border-gray-300 text-gray-700 hover:bg-red-500 hover:text-white hover:border-red-500 transition"
           >
-            Logout <i className="ml-1 fas fa-sign-out-alt"></i>
+            Logout
           </button>
         </div>
       </div>
