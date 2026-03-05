@@ -63,10 +63,12 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ user }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0f172a] flex items-center justify-center text-slate-300">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p>Analyzing Performance Patterns...</p>
+          <p className="text-gray-600 font-medium">
+            Analyzing Performance Patterns...
+          </p>
         </div>
       </div>
     );
@@ -76,12 +78,12 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ user }) => {
 
   if (!data || !data.accuracyTrend || data.accuracyTrend.length === 0) {
     return (
-      <div className="min-h-screen bg-[#0f172a] flex items-center justify-center text-slate-400">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center max-w-lg">
-          <h2 className="text-2xl font-semibold text-slate-200">
+          <h2 className="text-2xl font-semibold text-gray-800">
             Insights Pending
           </h2>
-          <p className="mt-4">
+          <p className="mt-4 text-gray-600">
             Complete at least one mastery quiz attempt to unlock learning
             analytics.
           </p>
@@ -93,26 +95,25 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ user }) => {
   /* ================= MAIN UI ================= */
 
   return (
-    <div className="min-h-screen bg-[#0f172a] text-slate-100 px-10 py-12 space-y-10">
+    <div className="min-h-screen bg-gray-50 text-gray-800 px-10 py-12 space-y-10">
       {/* HEADER */}
       <div>
-        <h1 className="text-4xl font-semibold tracking-tight">
-          Learning Insights
-        </h1>
-        <p className="text-slate-400 mt-2">
+        <h1 className="text-4xl font-bold tracking-tight">Learning Insights</h1>
+
+        <p className="text-gray-500 mt-2">
           Deep academic performance analysis for {user.name}
         </p>
 
         <div className="mt-4 flex items-center gap-6">
           <span className="text-sm font-semibold">
-            Overall Score:{" "}
-            <span className="text-indigo-400">{data.overallScore}%</span>
+            Overall Score:
+            <span className="text-indigo-600 ml-2">{data.overallScore}%</span>
           </span>
 
           <select
             value={selectedTopic}
             onChange={(e) => setSelectedTopic(e.target.value)}
-            className="px-4 py-2 rounded-xl bg-[#1e293b] border border-slate-700 text-sm"
+            className="px-4 py-2 rounded-xl bg-white border border-gray-300 text-sm focus:border-indigo-500 outline-none"
           >
             <option value="">All Topics</option>
             {data.availableTopics?.map((topic) => (
@@ -129,23 +130,18 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ user }) => {
         {/* LEFT SIDE */}
         <div className="lg:col-span-2 space-y-8">
           {/* AREA CHART */}
-          <div className="bg-[#1e293b] p-8 rounded-2xl border border-slate-700">
-            <h3 className="font-semibold mb-6">Mastery Progression</h3>
+          <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm">
+            <h3 className="font-semibold mb-6 text-gray-800">
+              Mastery Progression
+            </h3>
 
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={data.accuracyTrend}>
-                  <CartesianGrid stroke="#334155" vertical={false} />
-                  <XAxis dataKey="date" stroke="#94a3b8" fontSize={11} />
-                  <YAxis stroke="#94a3b8" fontSize={11} domain={[0, 100]} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#1e293b",
-                      border: "1px solid #334155",
-                      borderRadius: "12px",
-                      color: "#fff",
-                    }}
-                  />
+                  <CartesianGrid stroke="#e5e7eb" vertical={false} />
+                  <XAxis dataKey="date" stroke="#6b7280" fontSize={11} />
+                  <YAxis stroke="#6b7280" fontSize={11} domain={[0, 100]} />
+                  <Tooltip />
                   <Area
                     type="monotone"
                     dataKey="score"
@@ -159,30 +155,18 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ user }) => {
           </div>
 
           {/* DIFFICULTY */}
-          <div className="bg-[#1e293b] p-8 rounded-2xl border border-slate-700">
-            <h3 className="font-semibold mb-6">Difficulty Breakdown</h3>
+          <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm">
+            <h3 className="font-semibold mb-6 text-gray-800">
+              Difficulty Breakdown
+            </h3>
 
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data.difficultyBreakdown}>
-                  <CartesianGrid stroke="#334155" vertical={false} />
-                  <XAxis dataKey="difficulty" stroke="#94a3b8" />
-                  <YAxis stroke="#94a3b8" domain={[0, 100]} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#1e293b",
-                      border: "1px solid #334155",
-                      borderRadius: "12px",
-                    }}
-                    labelStyle={{
-                      color: "#94a3b8",
-                    }}
-                    itemStyle={{
-                      color: "#e2e8f0",
-                      fontWeight: 500,
-                    }}
-                    cursor={{ fill: "#1e293b" }}
-                  />
+                  <CartesianGrid stroke="#e5e7eb" vertical={false} />
+                  <XAxis dataKey="difficulty" stroke="#6b7280" />
+                  <YAxis stroke="#6b7280" domain={[0, 100]} />
+                  <Tooltip />
 
                   <Bar dataKey="score" radius={[6, 6, 0, 0]}>
                     {data.difficultyBreakdown.map((entry, index) => (
@@ -204,11 +188,13 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ user }) => {
           </div>
 
           {/* WEAK CONCEPTS */}
-          <div className="bg-[#1e293b] p-8 rounded-2xl border border-slate-700">
-            <h3 className="font-semibold mb-6">Concept Weaknesses</h3>
+          <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm">
+            <h3 className="font-semibold mb-6 text-gray-800">
+              Concept Weaknesses
+            </h3>
 
             {data.weakConcepts.length === 0 ? (
-              <p className="text-emerald-400 font-medium">
+              <p className="text-emerald-600 font-medium">
                 No significant weak concepts detected.
               </p>
             ) : (
@@ -217,12 +203,12 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ user }) => {
                   <div key={idx}>
                     <div className="flex justify-between text-sm mb-2">
                       <span>{concept.concept}</span>
-                      <span className="text-red-400">
+                      <span className="text-red-500 font-semibold">
                         {concept.score.toFixed(0)}%
                       </span>
                     </div>
 
-                    <div className="h-2 w-full bg-slate-700 rounded-full">
+                    <div className="h-2 w-full bg-gray-200 rounded-full">
                       <div
                         className="h-full bg-red-500 rounded-full"
                         style={{ width: `${concept.score}%` }}
@@ -238,7 +224,7 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ user }) => {
         {/* RIGHT SIDE */}
         <div className="space-y-8">
           {/* AI INSIGHTS */}
-          <div className="bg-indigo-600 p-8 rounded-2xl text-white">
+          <div className="bg-indigo-600 p-8 rounded-2xl text-white shadow-lg">
             <h3 className="text-xl font-semibold mb-6">AI Tutor Insights</h3>
 
             {data.aiInsights ? (
@@ -263,7 +249,7 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ user }) => {
                 )}
 
                 {loadingResource && (
-                  <p className="text-xs mt-3 opacity-70">
+                  <p className="text-xs mt-3 opacity-80">
                     Loading recommendation...
                   </p>
                 )}
@@ -273,7 +259,7 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ user }) => {
                     href={resource.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block mt-4 p-3 bg-white/20 rounded-xl text-sm font-semibold"
+                    className="block mt-4 p-3 bg-white/20 rounded-xl text-sm font-semibold hover:bg-white/30"
                   >
                     {resource.title}
                   </a>
@@ -287,27 +273,29 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ user }) => {
           </div>
 
           {/* INTEGRITY */}
-          <div className="bg-[#1e293b] p-8 rounded-2xl border border-slate-700">
-            <h3 className="font-semibold mb-6">Integrity Dashboard</h3>
+          <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm">
+            <h3 className="font-semibold mb-6 text-gray-800">
+              Integrity Dashboard
+            </h3>
 
-            <div className="space-y-4">
+            <div className="space-y-4 text-sm">
               <div className="flex justify-between">
                 <span>Tab Switches</span>
-                <span className="text-indigo-400">
+                <span className="text-indigo-600 font-semibold">
                   {data.integrityReport.tabSwitches}
                 </span>
               </div>
 
               <div className="flex justify-between">
                 <span>Window Blurs</span>
-                <span className="text-indigo-400">
+                <span className="text-indigo-600 font-semibold">
                   {data.integrityReport.windowBlurs}
                 </span>
               </div>
 
               <div className="flex justify-between">
                 <span>Total Violations</span>
-                <span className="text-red-400">
+                <span className="text-red-500 font-semibold">
                   {data.integrityReport.totalViolations}
                 </span>
               </div>

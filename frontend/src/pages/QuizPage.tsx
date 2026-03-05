@@ -24,9 +24,6 @@ const QuizPage: React.FC<QuizPageProps> = ({ user, onNavigate }) => {
 
   const token = localStorage.getItem("token") || "";
 
-  // ==============================
-  // Load Topics
-  // ==============================
   useEffect(() => {
     const loadTopics = async () => {
       try {
@@ -40,9 +37,6 @@ const QuizPage: React.FC<QuizPageProps> = ({ user, onNavigate }) => {
     loadTopics();
   }, [user.id, token]);
 
-  // ==============================
-  // Load Attempt History
-  // ==============================
   const handleTopicChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const topicId = e.target.value;
     setSelectedTopicId(topicId);
@@ -63,9 +57,6 @@ const QuizPage: React.FC<QuizPageProps> = ({ user, onNavigate }) => {
     }
   };
 
-  // ==============================
-  // Generate Quiz
-  // ==============================
   const handleGenerate = async () => {
     if (!selectedTopicId) {
       setError("Select a topic first.");
@@ -92,15 +83,15 @@ const QuizPage: React.FC<QuizPageProps> = ({ user, onNavigate }) => {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#0f172a] text-slate-100">
+    <div className="flex min-h-screen bg-gray-50 text-gray-800">
       {/* ================= LEFT SIDEBAR ================= */}
-      <aside className="w-80 border-r border-slate-800 bg-[#111827] p-6 overflow-y-auto">
-        <h3 className="text-sm uppercase tracking-wide text-slate-400 mb-4">
+      <aside className="w-80 border-r border-gray-200 bg-white p-6 overflow-y-auto">
+        <h3 className="text-sm uppercase tracking-wide text-gray-400 mb-4">
           Attempt History
         </h3>
 
         {attempts.length === 0 && (
-          <p className="text-slate-500 text-sm">No attempts yet.</p>
+          <p className="text-gray-500 text-sm">No attempts yet.</p>
         )}
 
         {attempts.map((a) => (
@@ -110,15 +101,22 @@ const QuizPage: React.FC<QuizPageProps> = ({ user, onNavigate }) => {
               setIsTakingQuiz(false);
               setSelectedAttempt(a);
             }}
-            className={`w-full text-left p-4 rounded-xl mb-2 transition ${
+            className={`w-full text-left p-4 rounded-xl mb-3 border transition ${
               selectedAttempt?.id === a.id
-                ? "bg-slate-700"
-                : "hover:bg-slate-800"
+                ? "border-indigo-400 bg-indigo-50"
+                : "border-gray-200 hover:bg-gray-100"
             }`}
           >
-            <div className="flex justify-between">
-              <span>Attempt #{a.attempt_number}</span>
-              <span className="text-indigo-400">{a.score.toFixed(0)}%</span>
+            <div className="flex justify-between items-center">
+              <span className="font-medium">Attempt #{a.attempt_number}</span>
+
+              <span
+                className={`text-sm font-semibold ${
+                  a.score >= 75 ? "text-emerald-600" : "text-red-500"
+                }`}
+              >
+                {a.score.toFixed(0)}%
+              </span>
             </div>
           </button>
         ))}
@@ -141,7 +139,6 @@ const QuizPage: React.FC<QuizPageProps> = ({ user, onNavigate }) => {
               );
               setAttempts(history);
 
-              // 🔥 AUTO REDIRECT IF PASSED
               if (attempt.passed) {
                 onNavigate(View.CERTIFICATES);
               }
@@ -155,7 +152,7 @@ const QuizPage: React.FC<QuizPageProps> = ({ user, onNavigate }) => {
           <div className="max-w-4xl mx-auto">
             <button
               onClick={resetToGenerator}
-              className="mb-6 px-4 py-2 bg-slate-700 rounded-xl text-sm"
+              className="mb-6 px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-sm"
             >
               ← Back to Quiz Page
             </button>
@@ -169,8 +166,8 @@ const QuizPage: React.FC<QuizPageProps> = ({ user, onNavigate }) => {
                 key={q.question_id}
                 className={`p-6 rounded-2xl border mb-6 ${
                   q.is_correct
-                    ? "bg-emerald-900/20 border-emerald-700"
-                    : "bg-red-900/20 border-red-700"
+                    ? "bg-emerald-50 border-emerald-200"
+                    : "bg-red-50 border-red-200"
                 }`}
               >
                 <p className="font-semibold mb-4">
@@ -182,10 +179,10 @@ const QuizPage: React.FC<QuizPageProps> = ({ user, onNavigate }) => {
                     key={idx}
                     className={`p-3 rounded-xl border mb-2 ${
                       idx === q.correct_answer
-                        ? "bg-emerald-700/30 border-emerald-500"
+                        ? "bg-emerald-100 border-emerald-300"
                         : idx === q.selected_answer
-                          ? "bg-red-700/30 border-red-500"
-                          : "bg-[#1e293b] border-slate-700"
+                          ? "bg-red-100 border-red-300"
+                          : "bg-white border-gray-200"
                     }`}
                   >
                     {opt}
@@ -199,15 +196,15 @@ const QuizPage: React.FC<QuizPageProps> = ({ user, onNavigate }) => {
         {/* ===== GENERATOR VIEW ===== */}
         {!isTakingQuiz && !selectedAttempt && (
           <div className="max-w-3xl mx-auto">
-            <h1 className="text-3xl font-semibold mb-6">
+            <h1 className="text-3xl font-bold mb-6">
               Generate Mastery Assessment
             </h1>
 
-            <div className="bg-[#1e293b] p-8 rounded-2xl border border-slate-700">
+            <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm">
               <select
                 value={selectedTopicId}
                 onChange={handleTopicChange}
-                className="w-full px-4 py-3 rounded-xl bg-[#0f172a] border border-slate-700 mb-4"
+                className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-300 mb-4 focus:border-indigo-500 outline-none"
               >
                 <option value="">-- Choose Topic --</option>
                 {topics.map((t) => (
@@ -220,7 +217,7 @@ const QuizPage: React.FC<QuizPageProps> = ({ user, onNavigate }) => {
               <button
                 onClick={handleGenerate}
                 disabled={loading}
-                className="px-6 py-3 bg-indigo-600 rounded-xl font-semibold"
+                className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-500 transition"
               >
                 {loading ? "Generating..." : "Generate Quiz"}
               </button>
@@ -232,12 +229,14 @@ const QuizPage: React.FC<QuizPageProps> = ({ user, onNavigate }) => {
                       setSelectedAttempt(null);
                       setIsTakingQuiz(true);
                     }}
-                    className="px-6 py-3 bg-emerald-600 rounded-xl font-semibold"
+                    className="px-6 py-3 bg-emerald-500 text-white rounded-xl font-semibold hover:bg-emerald-400 transition"
                   >
                     Start Attempt
                   </button>
                 </div>
               )}
+
+              {error && <p className="text-red-500 text-sm mt-4">{error}</p>}
             </div>
           </div>
         )}

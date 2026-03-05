@@ -1,9 +1,0 @@
-
-{
-  "name": "DidAct AI - Master Edition",
-  "description": "Enterprise-grade AI learning assistant with integrity monitoring and automated PDF certification.",
-  "requestFramePermissions": [
-    "camera",
-    "microphone"
-  ]
-}

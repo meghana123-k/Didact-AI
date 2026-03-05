@@ -4,7 +4,7 @@ import { Topic, User } from "../types";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
 import type { CodeProps } from "react-markdown/lib/ast";
 
 interface TopicUploadProps {
@@ -63,49 +63,51 @@ const TopicUpload: React.FC<TopicUploadProps> = ({ user }) => {
 
     setLoading(false);
   };
+
   const formattedSummary = selectedTopic?.summary
     ? selectedTopic.summary
         .replace(/(#+\s.*)(\n)([^#\n])/g, "$1\n\n$3")
         .replace(/([a-z0-9])\.\s([A-Z])/g, "$1.\n\n$2")
     : "";
 
-
   return (
-    <div className="flex h-[calc(100vh-80px)] bg-[#0f172a] text-slate-200">
+    <div className="flex h-[calc(100vh-80px)] bg-gray-50 text-gray-800">
       {/* Sidebar */}
-      <aside className="w-72 border-r border-slate-800 bg-[#111827] p-4 overflow-y-auto">
-        <h3 className="text-sm uppercase tracking-wide text-slate-400 mb-4">
+      <aside className="w-72 border-r border-gray-200 bg-white p-4 overflow-y-auto shadow-sm">
+        <h3 className="text-sm uppercase tracking-wide text-gray-400 mb-4">
           Saved Topics
         </h3>
 
         {history.length === 0 && (
-          <p className="text-slate-500 text-sm">No topics yet.</p>
+          <p className="text-gray-500 text-sm">No topics yet.</p>
         )}
 
         {history.map((t) => (
           <button
             key={t.id}
             onClick={() => setSelectedTopic(t)}
-            className={`w-full text-left p-3 rounded-xl mb-2 transition ${
-              selectedTopic?.id === t.id ? "bg-slate-700" : "hover:bg-slate-800"
+            className={`w-full text-left p-3 rounded-lg mb-2 transition ${
+              selectedTopic?.id === t.id
+                ? "bg-indigo-50 border border-indigo-200"
+                : "hover:bg-gray-100"
             }`}
           >
-            <p className="text-sm font-medium truncate text-white">{t.title}</p>
-            <p className="text-xs text-slate-400">{t.mode}</p>
+            <p className="text-sm font-semibold truncate">{t.title}</p>
+            <p className="text-xs text-gray-500">{t.mode}</p>
           </button>
         ))}
       </aside>
 
-      {/* Main Content */}
+      {/* Main */}
       <main className="flex-1 p-10 overflow-y-auto">
         {!selectedTopic && (
           <div className="max-w-3xl mx-auto">
-            <h2 className="text-2xl font-semibold mb-6 text-white">
+            <h2 className="text-3xl font-semibold mb-6">
               Upload & Summarize Topic
             </h2>
 
             {error && (
-              <div className="mb-4 p-3 rounded-xl bg-red-900/30 border border-red-700 text-red-400 text-sm">
+              <div className="mb-4 p-3 rounded-lg bg-red-100 border border-red-300 text-red-600 text-sm">
                 {error}
               </div>
             )}
@@ -115,13 +117,13 @@ const TopicUpload: React.FC<TopicUploadProps> = ({ user }) => {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Topic Title"
-                className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-slate-700 text-white focus:border-indigo-500 outline-none"
+                className="w-full px-4 py-3 rounded-lg bg-white border border-gray-300 focus:border-indigo-500 outline-none shadow-sm"
               />
 
               <select
                 value={mode}
                 onChange={(e) => setMode(e.target.value as any)}
-                className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-slate-700 text-white"
+                className="w-full px-4 py-3 rounded-lg bg-white border border-gray-300 shadow-sm"
               >
                 <option value="basic">Basic (Child Friendly)</option>
                 <option value="detailed">Detailed (Academic)</option>
@@ -133,20 +135,20 @@ const TopicUpload: React.FC<TopicUploadProps> = ({ user }) => {
                 onChange={(e) => setText(e.target.value)}
                 placeholder="Paste text here..."
                 rows={6}
-                className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-slate-700 text-white outline-none"
+                className="w-full px-4 py-3 rounded-lg bg-white border border-gray-300 outline-none shadow-sm"
               />
 
               <input
                 type="file"
                 accept=".pdf,.docx"
                 onChange={(e) => setFile(e.target.files?.[0] || null)}
-                className="text-slate-400"
+                className="text-gray-600"
               />
 
               <button
                 type="submit"
                 disabled={loading}
-                className="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 transition font-medium"
+                className="px-6 py-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition font-medium shadow"
               >
                 {loading ? "Summarizing..." : "Summarize & Save"}
               </button>
@@ -158,47 +160,21 @@ const TopicUpload: React.FC<TopicUploadProps> = ({ user }) => {
           <div className="max-w-4xl mx-auto">
             <button
               onClick={() => setSelectedTopic(null)}
-              className="text-sm text-indigo-400 mb-6 hover:text-indigo-300"
+              className="text-sm text-indigo-600 mb-6 hover:underline"
             >
               ← Back
             </button>
 
-            <h2 className="text-3xl font-bold mb-3 text-white">
-              {selectedTopic.title}
-            </h2>
+            <h2 className="text-3xl font-bold mb-3">{selectedTopic.title}</h2>
 
-            {/* Mode Badge */}
-            <span className="px-3 py-1 bg-indigo-500/20 text-indigo-400 text-xs rounded-full font-semibold">
+            <span className="px-3 py-1 bg-indigo-100 text-indigo-700 text-xs rounded-full font-semibold">
               {selectedTopic.mode.toUpperCase()} MODE
             </span>
 
-            <div className="mt-8 space-y-4 leading-8 text-slate-300">
+            <div className="markdown-body mt-8">
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 components={{
-                  h1: ({ children }) => (
-                    <h1 className="text-3xl font-bold text-indigo-400 mt-8 mb-4">
-                      {children}
-                    </h1>
-                  ),
-                  h2: ({ children }) => (
-                    <h2 className="text-2xl font-semibold text-sky-400 mt-6 mb-3">
-                      {children}
-                    </h2>
-                  ),
-                  h3: ({ children }) => (
-                    <h3 className="text-xl font-semibold text-purple-400 mt-5 mb-2">
-                      {children}
-                    </h3>
-                  ),
-                  strong: ({ children }) => (
-                    <strong className="text-yellow-400 font-semibold">
-                      {children}
-                    </strong>
-                  ),
-                  p: ({ children }) => (
-                    <p className="text-slate-200">{children}</p>
-                  ),
                   code: ({
                     inline,
                     className,
@@ -208,7 +184,7 @@ const TopicUpload: React.FC<TopicUploadProps> = ({ user }) => {
                     const match = /language-(\w+)/.exec(className || "");
                     return !inline && match ? (
                       <SyntaxHighlighter
-                        style={oneDark}
+                        style={oneLight}
                         language={match[1]}
                         PreTag="div"
                         {...props}
@@ -216,25 +192,13 @@ const TopicUpload: React.FC<TopicUploadProps> = ({ user }) => {
                         {String(children).replace(/\n$/, "")}
                       </SyntaxHighlighter>
                     ) : (
-                      <code className="bg-slate-800 px-2 py-1 rounded text-pink-400">
+                      <code className="bg-gray-100 px-2 py-1 rounded text-indigo-600">
                         {children}
                       </code>
                     );
                   },
-                  li: ({ children }) => (
-                    <li className="ml-6 list-disc text-slate-200">
-                      {children}
-                    </li>
-                  ),
-                  blockquote: ({ children }) => (
-                    <blockquote className="border-l-4 border-indigo-500 pl-4 italic text-slate-400">
-                      {children}
-                    </blockquote>
-                  ),
                 }}
               >
-                
-                {/* {selectedTopic.summary} */}
                 {formattedSummary}
               </ReactMarkdown>
             </div>

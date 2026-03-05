@@ -29,48 +29,55 @@ const Login: React.FC<LoginProps> = ({ onSuccess, onToggle }) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0f172a] flex items-center justify-center p-6">
-      <div className="w-full max-w-md bg-[#1e293b] border border-slate-700 rounded-2xl p-8 shadow-lg">
+    <div className="min-h-screen flex items-center justify-center px-6 bg-gradient-to-b from-white to-indigo-50">
+      {/* CARD */}
+      <div className="w-full max-w-md bg-white border border-gray-200 rounded-2xl p-10 shadow-lg">
+        {/* HEADER */}
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-semibold text-slate-100">
-            Welcome Back
-          </h2>
-          <p className="text-slate-400 mt-2 text-sm">
-            Sign in to continue your academic progress
+          <div className="w-14 h-14 mx-auto mb-4 rounded-xl bg-indigo-600 flex items-center justify-center text-white text-xl font-bold shadow-md">
+            AI
+          </div>
+
+          <h2 className="text-3xl font-semibold text-gray-800">Welcome Back</h2>
+
+          <p className="text-gray-500 mt-2 text-sm">
+            Sign in to continue your learning journey
           </p>
         </div>
 
+        {/* ERROR */}
         {error && (
-          <div className="mb-4 p-3 rounded-xl bg-red-900/30 border border-red-700 text-red-400 text-sm">
+          <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm">
             {error}
           </div>
         )}
 
+        {/* FORM */}
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm text-slate-400 mb-1">
+            <label className="block text-sm text-gray-600 mb-1">
               Email Address
             </label>
+
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-[#0f172a] border border-slate-700 text-slate-100 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+              className="w-full px-4 py-3 rounded-xl bg-white border border-gray-300 text-gray-800 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition"
               placeholder="you@example.com"
             />
           </div>
 
           <div>
-            <label className="block text-sm text-slate-400 mb-1">
-              Password
-            </label>
+            <label className="block text-sm text-gray-600 mb-1">Password</label>
+
             <input
               type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-[#0f172a] border border-slate-700 text-slate-100 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+              className="w-full px-4 py-3 rounded-xl bg-white border border-gray-300 text-gray-800 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition"
               placeholder="••••••••"
             />
           </div>
@@ -78,17 +85,18 @@ const Login: React.FC<LoginProps> = ({ onSuccess, onToggle }) => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition-all"
+            className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
             {loading ? "Authenticating..." : "Sign In"}
           </button>
         </form>
 
-        <div className="mt-6 text-center text-sm text-slate-400">
+        {/* FOOTER */}
+        <div className="mt-6 text-center text-sm text-gray-500">
           Don’t have an account?
           <button
             onClick={onToggle}
-            className="ml-2 text-indigo-400 hover:text-indigo-300 font-medium"
+            className="ml-2 text-indigo-600 hover:text-indigo-500 font-medium"
           >
             Sign Up
           </button>

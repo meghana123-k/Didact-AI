@@ -63,15 +63,17 @@ const App: React.FC = () => {
     setCurrentView(View.LOGIN);
   };
 
-  // =========================
-  // Dark Loading Screen
-  // =========================
+  /* =========================
+     LIGHT LOADING SCREEN
+  ========================= */
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0f172a] text-slate-200">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-white to-indigo-50">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-slate-400 font-medium">Initializing DidactAI...</p>
+
+          <p className="text-gray-600 font-medium">Initializing DidactAI...</p>
         </div>
       </div>
     );
@@ -91,10 +93,11 @@ const App: React.FC = () => {
     );
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0f172a] text-slate-100">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-white to-indigo-50 text-gray-800">
       {/* =========================
-          Navbar (Only if logged in)
+          Navbar
       ========================= */}
+
       {currentUser && (
         <Navbar
           user={currentUser}
@@ -105,12 +108,15 @@ const App: React.FC = () => {
       )}
 
       {/* =========================
-          Full Width Main Content
+          Main Content
       ========================= */}
-      <main className="flex-1 w-full bg-[#0f172a]">
+
+      <main className="flex-1 w-full">
         <ProtectedRoute isAuthenticated={!!currentUser} fallback={renderAuth()}>
           {currentView === View.DASHBOARD && <Dashboard />}
+
           {currentView === View.TOPICS && <UploadTopic user={currentUser!} />}
+
           {currentView === View.QUIZ_GEN && (
             <QuizPage
               user={currentUser!}
@@ -121,15 +127,17 @@ const App: React.FC = () => {
           {currentView === View.ANALYTICS && (
             <AnalyticsPage user={currentUser!} />
           )}
+
           {currentView === View.CERTIFICATES && <CertificatePage />}
         </ProtectedRoute>
       </main>
 
       {/* =========================
-          Footer (Dark)
+          Footer
       ========================= */}
+
       {currentUser && (
-        <footer className="bg-[#0f172a] border-t border-slate-800 py-6 text-center text-slate-500 text-sm">
+        <footer className="border-t border-gray-200 py-6 text-center text-gray-500 text-sm bg-white">
           © 2026 DidactAI — Intelligent Learning Insights Platform
         </footer>
       )}

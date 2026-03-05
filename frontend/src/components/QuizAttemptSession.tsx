@@ -51,7 +51,6 @@ const QuizAttemptSession: React.FC<QuizAttemptSessionProps> = ({
     [token],
   );
 
-  // Timer + Integrity listeners
   useEffect(() => {
     const timer = setInterval(() => {
       setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
@@ -79,7 +78,6 @@ const QuizAttemptSession: React.FC<QuizAttemptSessionProps> = ({
     };
   }, [logIntegrity]);
 
-  // Auto-submit once when time reaches 0
   useEffect(() => {
     if (timeLeft === 0 && !submitted) {
       handleSubmit(true);
@@ -145,18 +143,18 @@ const QuizAttemptSession: React.FC<QuizAttemptSessionProps> = ({
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-20">
       {/* HEADER */}
-      <div className="bg-[#1e293b] p-6 rounded-3xl border border-slate-700 shadow-lg">
+      <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-sm">
         <div className="flex items-center justify-between gap-6">
           <button
             onClick={onCancel}
-            className="px-4 py-2 rounded-xl bg-[#0f172a] text-slate-200 border border-slate-600 text-sm font-medium"
+            className="px-4 py-2 rounded-xl bg-gray-100 text-gray-700 border border-gray-300 text-sm font-medium hover:bg-gray-200 transition"
           >
             ← Back to Quiz Page
           </button>
 
           <div>
-            <h3 className="font-bold text-slate-100">Mastery Exam</h3>
-            <p className="text-xs text-slate-400">
+            <h3 className="font-bold text-gray-800">Mastery Exam</h3>
+            <p className="text-xs text-gray-500">
               Question {currentIndex + 1} of {questions.length}
             </p>
           </div>
@@ -164,12 +162,12 @@ const QuizAttemptSession: React.FC<QuizAttemptSessionProps> = ({
 
         <div className="flex items-center gap-6 mt-4">
           {violationCount > 0 && (
-            <div className="px-3 py-1 rounded-lg text-xs font-bold bg-amber-100 text-amber-600">
+            <div className="px-3 py-1 rounded-lg text-xs font-bold bg-amber-100 text-amber-700">
               {violationCount} Violation(s)
             </div>
           )}
 
-          <div className="px-4 py-2 rounded-xl font-mono font-bold bg-[#0f172a] text-slate-200">
+          <div className="px-4 py-2 rounded-xl font-mono font-bold bg-indigo-50 text-indigo-600">
             {minutes}:{seconds < 10 ? `0${seconds}` : seconds}
           </div>
         </div>
@@ -177,18 +175,20 @@ const QuizAttemptSession: React.FC<QuizAttemptSessionProps> = ({
 
       {/* QUESTION */}
       {currentQuestion && (
-        <div className="bg-[#1e293b] p-10 rounded-3xl border border-slate-700">
-          <h4 className="text-2xl font-bold mb-8">{currentQuestion.text}</h4>
+        <div className="bg-white p-10 rounded-3xl border border-gray-200 shadow-sm">
+          <h4 className="text-2xl font-bold mb-8 text-gray-800">
+            {currentQuestion.text}
+          </h4>
 
           <div className="grid gap-4">
             {currentQuestion.options.map((opt, idx) => (
               <button
                 key={idx}
                 onClick={() => handleOptionSelect(idx)}
-                className={`p-5 text-left rounded-2xl border-2 transition ${
+                className={`p-5 text-left rounded-2xl border-2 transition-all ${
                   answers[currentIndex] === idx
-                    ? "border-indigo-600 bg-indigo-50 text-indigo-700"
-                    : "border-slate-700 bg-[#0f172a] text-slate-300"
+                    ? "border-indigo-500 bg-indigo-50 text-indigo-700"
+                    : "border-gray-200 bg-white text-gray-700 hover:border-indigo-400 hover:bg-indigo-50"
                 }`}
               >
                 {opt}
@@ -204,7 +204,7 @@ const QuizAttemptSession: React.FC<QuizAttemptSessionProps> = ({
           <button
             onClick={handlePrev}
             disabled={currentIndex === 0}
-            className="px-6 py-3 bg-slate-700 rounded-xl disabled:opacity-30"
+            className="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 disabled:opacity-40"
           >
             Previous
           </button>
@@ -212,7 +212,7 @@ const QuizAttemptSession: React.FC<QuizAttemptSessionProps> = ({
           <button
             onClick={handleNext}
             disabled={currentIndex === questions.length - 1}
-            className="px-6 py-3 bg-slate-700 rounded-xl disabled:opacity-30"
+            className="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 disabled:opacity-40"
           >
             Next
           </button>
@@ -222,14 +222,14 @@ const QuizAttemptSession: React.FC<QuizAttemptSessionProps> = ({
           <button
             onClick={() => handleSubmit()}
             disabled={loading}
-            className="px-8 py-3 bg-indigo-600 rounded-xl font-bold"
+            className="px-8 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-500 transition"
           >
             {loading ? "Submitting..." : "Submit Final Exam"}
           </button>
         )}
       </div>
 
-      {error && <div className="text-red-400 text-sm mt-4">{error}</div>}
+      {error && <div className="text-red-500 text-sm mt-4">{error}</div>}
     </div>
   );
 };
