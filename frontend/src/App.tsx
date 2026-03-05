@@ -81,7 +81,10 @@ const App: React.FC = () => {
                 currentUser ? (
                   <Navigate to="/" />
                 ) : (
-                  <Login onSuccess={handleAuthSuccess} />
+                  <Login
+                    onSuccess={handleAuthSuccess}
+                    onToggle={() => window.location.replace("/signup")}
+                  />
                 )
               }
             />
@@ -92,7 +95,10 @@ const App: React.FC = () => {
                 currentUser ? (
                   <Navigate to="/" />
                 ) : (
-                  <Signup onSuccess={handleAuthSuccess} />
+                  <Signup
+                    onSuccess={handleAuthSuccess}
+                    onToggle={() => window.location.replace("/login")}
+                  />
                 )
               }
             />
@@ -102,7 +108,10 @@ const App: React.FC = () => {
             <Route
               path="/"
               element={
-                <ProtectedRoute isAuthenticated={!!currentUser}>
+                <ProtectedRoute
+                  isAuthenticated={!!currentUser}
+                  fallback={<Navigate to="/login" />}
+                >
                   <Dashboard />
                 </ProtectedRoute>
               }
@@ -111,7 +120,10 @@ const App: React.FC = () => {
             <Route
               path="/summaries"
               element={
-                <ProtectedRoute isAuthenticated={!!currentUser}>
+                <ProtectedRoute
+                  isAuthenticated={!!currentUser}
+                  fallback={<Navigate to="/login" />}
+                >
                   <UploadTopic user={currentUser!} />
                 </ProtectedRoute>
               }
@@ -120,7 +132,10 @@ const App: React.FC = () => {
             <Route
               path="/assessments"
               element={
-                <ProtectedRoute isAuthenticated={!!currentUser}>
+                <ProtectedRoute
+                  isAuthenticated={!!currentUser}
+                  fallback={<Navigate to="/login" />}
+                >
                   <QuizPage user={currentUser!} />
                 </ProtectedRoute>
               }
@@ -129,7 +144,10 @@ const App: React.FC = () => {
             <Route
               path="/analytics"
               element={
-                <ProtectedRoute isAuthenticated={!!currentUser}>
+                <ProtectedRoute
+                  isAuthenticated={!!currentUser}
+                  fallback={<Navigate to="/login" />}
+                >
                   <AnalyticsPage user={currentUser!} />
                 </ProtectedRoute>
               }
@@ -138,7 +156,10 @@ const App: React.FC = () => {
             <Route
               path="/certificates"
               element={
-                <ProtectedRoute isAuthenticated={!!currentUser}>
+                <ProtectedRoute
+                  isAuthenticated={!!currentUser}
+                  fallback={<Navigate to="/login" />}
+                >
                   <CertificatePage />
                 </ProtectedRoute>
               }
@@ -146,7 +167,10 @@ const App: React.FC = () => {
             <Route
               path="/about"
               element={
-                <ProtectedRoute isAuthenticated={!!currentUser}>
+                <ProtectedRoute
+                  isAuthenticated={!!currentUser}
+                  fallback={<Navigate to="/login" />}
+                >
                   <AboutDidactAI />
                 </ProtectedRoute>
               }
