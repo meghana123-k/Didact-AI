@@ -101,13 +101,18 @@ def get_user_analytics(user_id):
         if len(flags) > 3:
             suspicious_count += 1
 
-        for r in attempt.question_results:
-            raw_concept = r.get("concept_tag", "general").strip().lower()
+
+        results = attempt.question_results or []
+
+        if isinstance(results, str):
+            results = json.loads(results)
+
+        for r in results:
+            raw_concept = r.get("concept_tag", "general")
+
+            concept = raw_concept.strip().lower()
+
             difficulty = r.get("difficulty", "medium")
-
-
-            tokens = raw_concept.split()
-            concept = " ".join(tokens[:2]) if len(tokens) >= 2 else raw_concept
 
             concept_stats.setdefault(concept, {"correct": 0, "total": 0})
             concept_stats[concept]["total"] += 1
@@ -119,8 +124,6 @@ def get_user_analytics(user_id):
                 difficulty_stats[difficulty].append(
                     1 if r.get("is_correct") else 0
                 )
-
-
     weak_concepts = []
 
     for c, s in concept_stats.items():
@@ -130,7 +133,7 @@ def get_user_analytics(user_id):
         accuracy = (s["correct"] / s["total"]) * 100
 
        
-        if accuracy < 80:
+        if s["total"] >= 2 and accuracy < 70:
             weak_concepts.append({
                 "concept": c,
                 "score": round(accuracy, 2),

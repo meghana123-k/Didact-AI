@@ -21,13 +21,18 @@ class QuizAttempt(db.Model):
     question_results = db.Column(db.JSON, nullable=False)
 
     def to_dict(self):
+        results = self.question_results
+
+        if isinstance(results, str):
+            results = json.loads(results)
+
         return {
             "id": self.id,
             "quiz_id": self.quiz_id,
             "user_id": self.user_id,
             "attempt_number": self.attempt_number,
             "score": self.score,
-            "question_results": self.question_results,
+            "question_results": results,
             "answers": json.loads(self.answers_json),
             "time_taken_seconds": self.time_taken_seconds,
             "attempted_at": self.attempted_at.isoformat(),

@@ -32,7 +32,7 @@ const Navbar: React.FC<NavbarProps> = ({
         >
           {/* Logo Icon */}
           <div className="w-9 h-9 rounded-lg bg-indigo-600 flex items-center justify-center shadow-sm">
-            <i className="fas fa-brain text-white text-sm"></i>
+            <i className="fas fa-book-open text-white text-sm"></i>
           </div>
 
           {/* Logo Text */}

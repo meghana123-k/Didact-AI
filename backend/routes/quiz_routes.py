@@ -335,7 +335,7 @@ def submit_attempt():
         attempt_number=attempt_count + 1,
         score=score,
         answers_json=json.dumps(answers),
-        question_results=json.dumps(question_results),  # ✅ FIXED
+        question_results=question_results,  
         time_taken_seconds=time_taken,
         integrity_flags=json.dumps(integrity_flags),
     )
