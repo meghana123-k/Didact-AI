@@ -210,3 +210,22 @@ def get_user_analytics(user_id):
             "recommendedResources": []
         }
     }), 200
+@analytics_bp.route("/recommendation/<concept>", methods=["GET"])
+@jwt_required()
+def get_recommendation(concept):
+
+    topic_id = request.args.get("topic_id")
+
+    # optional: improve search query using topic
+    query = concept
+    if topic_id:
+        topic = Topic.query.get(topic_id)
+        if topic:
+            query = f"{concept} {topic.title}"
+
+    video = fetch_youtube_video(query)
+
+    if not video:
+        return jsonify({"error": "No recommendation found"}), 404
+
+    return jsonify(video), 200

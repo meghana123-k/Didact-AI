@@ -27,9 +27,23 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ user }) => {
 
   useEffect(() => {
     fetchAnalytics(selectedTopic || undefined);
-    setResource(null);
   }, [user.id, selectedTopic]);
 
+  useEffect(() => {
+    if (!data?.weakConcepts?.length) return;
+
+    const concept = data.weakConcepts[0].concept;
+
+    const cached = localStorage.getItem(
+      `recommendation_${concept}_${selectedTopic}`,
+    );
+
+    if (cached) {
+      setResource(JSON.parse(cached));
+    } else {
+      setResource(null);
+    }
+  }, [data, selectedTopic]);
   const fetchAnalytics = async (topicId?: string) => {
     try {
       setLoading(true);
@@ -48,10 +62,18 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ user }) => {
   const fetchRecommendation = async (concept: string) => {
     try {
       setLoadingResource(true);
+
       const response = await api.get(
-        `/analytics/recommendation/${concept}?topic_id=${selectedTopic}`,
+        `/analytics/recommendation/${encodeURIComponent(concept)}?topic_id=${selectedTopic}`,
       );
+
       setResource(response.data);
+
+      // persist locally
+      localStorage.setItem(
+        `recommendation_${concept}_${selectedTopic}`,
+        JSON.stringify(response.data),
+      );
     } catch (err) {
       console.error("Recommendation failed", err);
     } finally {
@@ -255,14 +277,18 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ user }) => {
                 )}
 
                 {resource && (
-                  <a
-                    href={resource.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block mt-4 p-3 bg-white/20 rounded-xl text-sm font-semibold hover:bg-white/30"
-                  >
-                    {resource.title}
-                  </a>
+                  <div className="mt-4 p-4 bg-white/20 rounded-xl">
+                    <p className="text-xs opacity-80 mb-1">Recommended Video</p>
+
+                    <a
+                      href={resource.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm font-semibold underline"
+                    >
+                      {resource.title}
+                    </a>
+                  </div>
                 )}
               </>
             ) : (
