@@ -74,7 +74,7 @@ def extract_text(file):
 def build_prompt(text, mode):
     base = (
         "You are DidAct AI, a pedagogy-focused tutor.\n"
-        "Write a clear, coherent explanation between 1500 and 2500 words.\n"
+        "Write a clear, coherent explanation between 1000 and 1500 words.\n"
         "Use short paragraphs and simple language where possible.\n\n"
     )
 
