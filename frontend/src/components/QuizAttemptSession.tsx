@@ -25,7 +25,7 @@ const QuizAttemptSession: React.FC<QuizAttemptSessionProps> = ({
   const [integrityFlags, setIntegrityFlags] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [timeLeft, setTimeLeft] = useState(1800);
+  const [timeLeft, setTimeLeft] = useState(900);
   const [submitted, setSubmitted] = useState(false);
 
   const token = localStorage.getItem("token") || "";
@@ -167,8 +167,14 @@ const QuizAttemptSession: React.FC<QuizAttemptSessionProps> = ({
             </div>
           )}
 
-          <div className="px-4 py-2 rounded-xl font-mono font-bold bg-indigo-50 text-indigo-600">
-            {minutes}:{seconds < 10 ? `0${seconds}` : seconds}
+          <div
+            className={`px-4 py-2 rounded-xl font-mono font-bold ${
+              timeLeft < 120
+                ? "bg-red-100 text-red-600"
+                : "bg-indigo-50 text-indigo-600"
+            }`}
+          >
+            {minutes}:{seconds.toString().padStart(2, "0")}
           </div>
         </div>
       </div>

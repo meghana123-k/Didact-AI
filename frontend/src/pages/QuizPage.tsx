@@ -153,7 +153,7 @@ const QuizPage: React.FC<QuizPageProps> = ({ user, onNavigate }) => {
               );
               setAttempts(history);
 
-              if (attempt.passed) {
+              if (attempt.score >= 75) {
                 onNavigate(View.CERTIFICATES);
               }
             }}

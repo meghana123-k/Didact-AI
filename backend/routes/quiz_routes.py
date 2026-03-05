@@ -352,41 +352,64 @@ def submit_attempt():
     if passed:
         user = User.query.get(user_id)
 
-        old_certs = Certificate.query.filter_by(
-            user_id=user_id,
-            quiz_id=quiz_id
-        ).all()
-
-        for cert in old_certs:
-            if cert.file_path and os.path.exists(cert.file_path):
-                os.remove(cert.file_path)
-            db.session.delete(cert)
-
-        db.session.commit()
-
-        cert_uid = f"CERT-{uuid.uuid4().hex[:8].upper()}"
-
-        new_cert = Certificate(
-            user_id=user_id,
-            quiz_id=quiz_id,
-            certificate_uid=cert_uid,
-            score=score,
-            issued_at=datetime.utcnow()
+        existing_cert = (
+            Certificate.query
+            .join(Quiz, Certificate.quiz_id == Quiz.id)
+            .filter(
+                Certificate.user_id == user_id,
+                Quiz.topic_id == quiz.topic_id
+            )
+            .first()
         )
 
-        try:
-            path = _build_file_path(cert_uid)
-            _generate_certificate(new_cert, user, quiz, path)
-            new_cert.file_path = path
+        # Case 1: No certificate yet → create
+        if not existing_cert:
 
-            db.session.add(new_cert)
-            db.session.commit()
+            cert_uid = f"CERT-{uuid.uuid4().hex[:8].upper()}"
 
-            certificate_data = new_cert.to_dict()
+            new_cert = Certificate(
+                user_id=user_id,
+                quiz_id=quiz_id,
+                certificate_uid=cert_uid,
+                score=score,
+                issued_at=datetime.utcnow()
+            )
 
-        except Exception as e:
-            db.session.rollback()
-            print("Certificate generation error:", e)
+            try:
+                path = _build_file_path(cert_uid)
+                _generate_certificate(new_cert, user, quiz, path)
+                new_cert.file_path = path
+
+                db.session.add(new_cert)
+                db.session.commit()
+
+                certificate_data = new_cert.to_dict()
+
+            except Exception as e:
+                db.session.rollback()
+                print("Certificate generation error:", e)
+
+        # Case 2: Certificate exists → update ONLY if score improved
+        elif score > existing_cert.score:
+
+            try:
+                if existing_cert.file_path and os.path.exists(existing_cert.file_path):
+                    os.remove(existing_cert.file_path)
+
+                existing_cert.score = score
+                existing_cert.issued_at = datetime.utcnow()
+
+                path = _build_file_path(existing_cert.certificate_uid)
+                _generate_certificate(existing_cert, user, quiz, path)
+                existing_cert.file_path = path
+
+                db.session.commit()
+
+                certificate_data = existing_cert.to_dict()
+
+            except Exception as e:
+                db.session.rollback()
+                print("Certificate update error:", e)
 
     response = attempt.to_dict()
     response["passed"] = passed

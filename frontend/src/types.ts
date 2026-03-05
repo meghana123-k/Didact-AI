@@ -122,4 +122,5 @@ export interface Certificate {
   userName: string;
   issueDate: string;
   pdf_url?: string;
+  download_url?: string;
 }

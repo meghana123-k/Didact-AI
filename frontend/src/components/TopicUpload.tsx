@@ -5,7 +5,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
-import type { CodeProps } from "react-markdown/lib/ast";
+import type { Components } from "react-markdown";
 
 interface TopicUploadProps {
   user: User;
@@ -175,13 +175,9 @@ const TopicUpload: React.FC<TopicUploadProps> = ({ user }) => {
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 components={{
-                  code: ({
-                    inline,
-                    className,
-                    children,
-                    ...props
-                  }: CodeProps) => {
+                  code({ inline, className, children, ...props }: any) {
                     const match = /language-(\w+)/.exec(className || "");
+
                     return !inline && match ? (
                       <SyntaxHighlighter
                         style={oneLight}

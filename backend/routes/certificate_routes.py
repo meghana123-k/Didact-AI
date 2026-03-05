@@ -61,69 +61,69 @@ def _generate_certificate(cert, user, quiz, path):
     image.save(path)
 
 
-@certificate_bp.route('/generate/<quiz_id>', methods=['POST'])
-@jwt_required()
-def generate_certificate(quiz_id):
+# @certificate_bp.route('/generate/<quiz_id>', methods=['POST'])
+# @jwt_required()
+# def generate_certificate(quiz_id):
 
-    user_id = get_jwt_identity()
+#     user_id = get_jwt_identity()
 
-    best_attempt = (
-        QuizAttempt.query
-        .filter_by(user_id=user_id, quiz_id=quiz_id)
-        .order_by(QuizAttempt.score.desc())
-        .first()
-    )
+#     best_attempt = (
+#         QuizAttempt.query
+#         .filter_by(user_id=user_id, quiz_id=quiz_id)
+#         .order_by(QuizAttempt.score.desc())
+#         .first()
+#     )
 
-    # if not best_attempt or best_attempt.score < 75:
-    #     return jsonify({"error": "Minimum 75% required"}), 403
-    MIN_SCORE = current_app.config.get("CERT_MIN_SCORE", 75)
+#     # if not best_attempt or best_attempt.score < 75:
+#     #     return jsonify({"error": "Minimum 75% required"}), 403
+#     MIN_SCORE = current_app.config.get("CERT_MIN_SCORE", 75)
 
-    if not best_attempt or best_attempt.score < MIN_SCORE:
-        return jsonify({
-            "error": f"Minimum {MIN_SCORE}% required"
-        }), 403
+#     if not best_attempt or best_attempt.score < MIN_SCORE:
+#         return jsonify({
+#             "error": f"Minimum {MIN_SCORE}% required"
+#         }), 403
 
 
-    user = User.query.get(user_id)
-    quiz = Quiz.query.get(quiz_id)
+#     user = User.query.get(user_id)
+#     quiz = Quiz.query.get(quiz_id)
 
     
-    old_certs = Certificate.query.filter_by(
-        user_id=user_id,
-        quiz_id=quiz_id
-    ).all()
+#     old_certs = Certificate.query.filter_by(
+#         user_id=user_id,
+#         quiz_id=quiz_id
+#     ).all()
 
-    for cert in old_certs:
-        if cert.file_path and os.path.exists(cert.file_path):
-            os.remove(cert.file_path)  
-        db.session.delete(cert)
+#     for cert in old_certs:
+#         if cert.file_path and os.path.exists(cert.file_path):
+#             os.remove(cert.file_path)  
+#         db.session.delete(cert)
 
-    db.session.commit()
+#     db.session.commit()
 
 
-    cert_uid = f"CERT-{uuid.uuid4().hex[:8].upper()}"
+#     cert_uid = f"CERT-{uuid.uuid4().hex[:8].upper()}"
 
-    new_cert = Certificate(
-        user_id=user_id,
-        quiz_id=quiz_id,
-        certificate_uid=cert_uid,
-        score=best_attempt.score,
-        issued_at=datetime.utcnow()
-    )
+#     new_cert = Certificate(
+#         user_id=user_id,
+#         quiz_id=quiz_id,
+#         certificate_uid=cert_uid,
+#         score=best_attempt.score,
+#         issued_at=datetime.utcnow()
+#     )
 
-    try:
-        path = _build_file_path(cert_uid)
-        _generate_certificate(new_cert, user, quiz, path)
-        new_cert.file_path = path
+#     try:
+#         path = _build_file_path(cert_uid)
+#         _generate_certificate(new_cert, user, quiz, path)
+#         new_cert.file_path = path
 
-        db.session.add(new_cert)
-        db.session.commit()
+#         db.session.add(new_cert)
+#         db.session.commit()
 
-        return jsonify(new_cert.to_dict()), 201
+#         return jsonify(new_cert.to_dict()), 201
 
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 500
+#     except Exception as e:
+#         db.session.rollback()
+#         return jsonify({"error": str(e)}), 500
     
 
 @certificate_bp.route('/download/<cert_uid>')

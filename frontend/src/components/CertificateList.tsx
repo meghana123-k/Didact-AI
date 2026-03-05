@@ -1,13 +1,14 @@
 import React from "react";
 import { certificateService } from "../services/certificateService";
+import { Certificate } from "../types";
 
 const CertificateList: React.FC = () => {
-  const [certs, setCerts] = React.useState<any[]>([]);
+  const [certs, setCerts] = React.useState<Certificate[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState("");
-  const token = localStorage.getItem("token") || "";
-
   React.useEffect(() => {
+    const token = localStorage.getItem("token");
+
     if (!token) {
       setError("Not authenticated");
       setLoading(false);
@@ -26,7 +27,7 @@ const CertificateList: React.FC = () => {
     };
 
     loadCertificates();
-  }, [token]);
+  }, []);
 
   /* ================= LOADING ================= */
 
@@ -107,20 +108,26 @@ const CertificateList: React.FC = () => {
                       {cert.certificate_uid}
                     </span>
                   </p>
+                  <p>
+                    Score:
+                    <span className="ml-2 text-emerald-600 font-semibold">
+                      {cert.score?.toFixed(1) ?? "0.0"}%
+                    </span>
+                  </p>
 
                   <p>
                     Issued on:
                     <span className="ml-2 text-gray-700 font-medium">
-                      {new Date(cert.issued_at).toLocaleDateString()}
+                      {cert.issued_at}
                     </span>
                   </p>
                 </div>
-
                 {/* DOWNLOAD BUTTON */}
                 <button
                   onClick={() =>
+                    cert.certificate_uid &&
                     window.open(
-                      `http://127.0.0.1:5001${cert.download_url}`,
+                      certificateService.getDownloadUrl(cert.certificate_uid),
                       "_blank",
                     )
                   }

@@ -231,7 +231,7 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ user }) => {
             {currentQuiz && (
               <div className="p-6 bg-white rounded-2xl border border-gray-200 shadow-sm">
                 <h3 className="font-semibold mb-4 text-gray-800">
-                  Quiz Ready ({currentQuiz.questions.length} Questions)
+                  Quiz Ready ({currentQuiz?.questions?.length ?? 0} Questions)
                 </h3>
 
                 <button
