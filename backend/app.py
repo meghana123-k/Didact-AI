@@ -19,7 +19,6 @@ load_dotenv()
 
 def create_app():
     app = Flask(__name__)
-    app.config["CERT_MIN_SCORE"] = 20 
     app.config.from_object(Config)
 
     # ✅ Correct CORS & preflight
