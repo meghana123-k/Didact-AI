@@ -180,17 +180,22 @@ def get_user_analytics(user_id):
         )
 
     
-    topic_ids = set()
-    available_topics = []
+    # Get all topics the user has attempted (not affected by topic filter)
+    topics = (
+        db.session.query(Topic)
+        .join(Quiz, Quiz.topic_id == Topic.id)
+        .join(QuizAttempt, QuizAttempt.quiz_id == Quiz.id)
+        .filter(QuizAttempt.user_id == user_id)
+        .distinct()
+        .all()
+    )
 
-    for attempt in attempts:
-        quiz = Quiz.query.get(attempt.quiz_id)
-        if quiz and quiz.topic_id not in topic_ids:
-            topic_ids.add(quiz.topic_id)
-            available_topics.append({
-                "id": quiz.topic.id,
-                "name": quiz.topic.title
-            })
+    available_topics = [
+        {"id": t.id, "name": t.title}
+        for t in topics
+    ]
+
+    available_topics.sort(key=lambda x: x["name"])
 
     return jsonify({
         "availableTopics": available_topics,
@@ -210,6 +215,7 @@ def get_user_analytics(user_id):
             "recommendedResources": []
         }
     }), 200
+
 @analytics_bp.route("/recommendation/<concept>", methods=["GET"])
 @jwt_required()
 def get_recommendation(concept):

@@ -81,7 +81,21 @@ const QuizPage: React.FC<QuizPageProps> = ({ user, onNavigate }) => {
     setSelectedAttempt(null);
     setCurrentQuiz(null);
   };
+  let correctCount = 0;
+  let wrongCount = 0;
+  let unattemptedCount = 0;
 
+  if (selectedAttempt) {
+    selectedAttempt.question_results.forEach((q) => {
+      if (q.selected_answer === null || q.selected_answer === undefined) {
+        unattemptedCount++;
+      } else if (q.is_correct) {
+        correctCount++;
+      } else {
+        wrongCount++;
+      }
+    });
+  }
   return (
     <div className="flex min-h-screen bg-gray-50 text-gray-800">
       {/* ================= LEFT SIDEBAR ================= */}
@@ -160,7 +174,30 @@ const QuizPage: React.FC<QuizPageProps> = ({ user, onNavigate }) => {
             <h2 className="text-2xl font-semibold mb-6">
               Attempt #{selectedAttempt.attempt_number} Review
             </h2>
+            <div className="grid grid-cols-3 gap-4 mb-8">
+              <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-center">
+                <p className="text-sm text-gray-500">Correct</p>
+                <p className="text-2xl font-bold text-emerald-600">
+                  {correctCount}
+                </p>
+              </div>
 
+              <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-center">
+                <p className="text-sm text-gray-500">Wrong</p>
+                <p className="text-2xl font-bold text-red-600">{wrongCount}</p>
+              </div>
+
+              <div className="p-4 rounded-xl bg-gray-100 border border-gray-300 text-center">
+                <p className="text-sm text-gray-500">Unattempted</p>
+                <p className="text-2xl font-bold text-gray-600">
+                  {unattemptedCount}
+                </p>
+              </div>
+            </div>
+            <p className="text-sm text-gray-500 mb-6">
+              Score: {selectedAttempt.score.toFixed(0)}% • Total Questions:{" "}
+              {selectedAttempt.question_results.length}
+            </p>
             {selectedAttempt.question_results.map((q, index) => (
               <div
                 key={q.question_id}
