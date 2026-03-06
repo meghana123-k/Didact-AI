@@ -7,8 +7,12 @@ import pdfplumber
 import docx
 import os
 from dotenv import load_dotenv
-import google.generativeai as genai
 from transformers import pipeline
+
+try:
+    import google.generativeai as genai  # type: ignore[reportMissingImports]
+except ImportError:
+    genai = None
 
 load_dotenv()
 
@@ -20,8 +24,10 @@ topic_bp = Blueprint("topic", __name__)
 GEMINI_SUMMARY_KEY = os.getenv("GEMINI_SUMMARY_KEY")
 if not GEMINI_SUMMARY_KEY:
     print("WARNING: GEMINI_SUMMARY_KEY not set. Gemini summarization will be skipped.")
+elif genai is None:
+    print("WARNING: google-generativeai is not installed. Gemini summarization will be skipped.")
 
-if GEMINI_SUMMARY_KEY:
+if GEMINI_SUMMARY_KEY and genai is not None:
     genai.configure(api_key=GEMINI_SUMMARY_KEY)
 
 # ===========================
@@ -169,7 +175,7 @@ def summarize_topic():
     summary = None
     quota_error = False
 
-    if GEMINI_SUMMARY_KEY:
+    if GEMINI_SUMMARY_KEY and genai is not None:
         try:
             prompt = build_prompt(extracted_text[:5000], mode)
             model = genai.GenerativeModel("gemini-1.5-flash")

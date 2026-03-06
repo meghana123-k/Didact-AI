@@ -13,3 +13,4 @@ transformers==4.48.0
 torch
 reportlab==4.2.5
 gunicorn==21.2.0
+qrcode[pil]
