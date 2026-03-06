@@ -8,7 +8,7 @@ import docx
 import os
 from dotenv import load_dotenv
 
-from google import genai
+import google.generativeai as genai
 from transformers import pipeline
 
 load_dotenv()
@@ -22,7 +22,8 @@ GEMINI_SUMMARY_KEY = os.getenv("GEMINI_SUMMARY_KEY")
 if not GEMINI_SUMMARY_KEY:
     print("WARNING: GEMINI_SUMMARY_KEY not set. Gemini summarization will be skipped.")
 
-gemini_client = genai.Client(api_key=GEMINI_SUMMARY_KEY) if GEMINI_SUMMARY_KEY else None
+if GEMINI_SUMMARY_KEY:
+    genai.configure(api_key=GEMINI_SUMMARY_KEY)
 
 # ===========================
 # ✅ HuggingFace Fallback (lightweight, safe defaults)
@@ -169,14 +170,12 @@ def summarize_topic():
     summary = None
     quota_error = False
 
-    if gemini_client:
+    if GEMINI_SUMMARY_KEY:
         try:
             prompt = build_prompt(extracted_text[:5000], mode)
-            response = gemini_client.models.generate_content(
-                model="gemini-3-flash-preview",
-                contents=prompt,
-            )
-            summary_text = (response.text or "").strip()
+            model = genai.GenerativeModel("gemini-1.5-flash")
+            response = model.generate_content(prompt)
+            summary_text = response.text.strip() if response.text else ""
             summary = normalize_to_word_range(summary_text)
         except Exception as e:
             msg = str(e)

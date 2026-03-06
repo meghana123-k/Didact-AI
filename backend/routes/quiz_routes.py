@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 import json
 import os
 from dotenv import load_dotenv
-from google import genai
+import google.generativeai as genai
 from transformers import pipeline
 from flask import current_app
 load_dotenv()
@@ -28,7 +28,8 @@ GEMINI_QUIZ_KEY = os.getenv("GEMINI_QUIZ_KEY")
 if not GEMINI_QUIZ_KEY:
     print("WARNING: GEMINI_QUIZ_KEY not set. Gemini quiz generation will be skipped.")
 
-gemini_client = genai.Client(api_key=GEMINI_QUIZ_KEY) if GEMINI_QUIZ_KEY else None
+if GEMINI_QUIZ_KEY:
+    genai.configure(api_key=GEMINI_QUIZ_KEY)
 
 # ======================
 # ✅ HuggingFace Fallback (lightweight, safe defaults)
@@ -196,12 +197,14 @@ def generate_quiz(topic_id):
     quota_error = False
 
     try:
-        if gemini_client:
-            result = gemini_client.models.generate_content(
-                model="gemini-3-flash-preview",
-                contents=quiz_prompt(topic.summary[:8000]),
+        if GEMINI_QUIZ_KEY:
+            model = genai.GenerativeModel("gemini-1.5-flash")
+
+            result = model.generate_content(
+                quiz_prompt(topic.summary[:8000])
             )
-            raw_text = (result.text or "").strip()
+
+            raw_text = result.text.strip() if result.text else ""
             questions_data = extract_json(raw_text)
             if not questions_data:
                 return jsonify({"error": "Model returned invalid JSON", "status": 500}), 500
