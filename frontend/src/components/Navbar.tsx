@@ -81,6 +81,7 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
             className="px-4 py-2 text-xs rounded-lg border border-gray-300 text-gray-700 hover:bg-red-500 hover:text-white hover:border-red-500 transition"
           >
             Logout
+            <i className="fas fa-sign-out-alt ml-2"></i>
           </button>
         </div>
       </div>

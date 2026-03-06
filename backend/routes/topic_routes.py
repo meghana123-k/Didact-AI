@@ -119,7 +119,7 @@ def build_prompt(text, mode):
 
 
 
-def normalize_to_word_range(text: str, min_words: int = 200, max_words: int = 500) -> str:
+def normalize_to_word_range(text: str, min_words: int = 800, max_words: int = 1500) -> str:
     """
     Post-process model output to satisfy the strict 1500–2500 word requirement.
     If the model under-shoots, we keep the text but note it's best-effort rather than
@@ -171,9 +171,9 @@ def summarize_topic():
 
     if gemini_client:
         try:
-            prompt = build_prompt(extracted_text[:1500], mode)
+            prompt = build_prompt(extracted_text[:5000], mode)
             response = gemini_client.models.generate_content(
-                model="gemini-flash-latest",
+                model="gemini-3-flash-preview",
                 contents=prompt,
             )
             summary_text = (response.text or "").strip()
@@ -181,11 +181,16 @@ def summarize_topic():
         except Exception as e:
             msg = str(e)
             # Detect quota/RESOURCE_EXHAUSTED and mark for fallback
-            if "RESOURCE_EXHAUSTED" in msg or "quota" in msg.lower():
+            if (
+                "RESOURCE_EXHAUSTED" in msg
+                or "quota" in msg.lower()
+                or "UNAVAILABLE" in msg
+                or "503" in msg
+            ):
                 quota_error = True
-                print(f"Gemini quota exceeded, falling back to HuggingFace: {msg}")
+                print(f"Gemini unavailable, switching to HuggingFace fallback: {msg}")
             else:
-                return jsonify({"error": f"Gemini summarization failed: {msg}", "status": 500}), 500
+                print(f"Gemini unexpected error, using fallback: {msg}")
 
     if summary is None:
         # Either no Gemini client or quota exhausted → use HuggingFace locally

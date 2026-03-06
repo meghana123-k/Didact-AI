@@ -198,7 +198,7 @@ def generate_quiz(topic_id):
     try:
         if gemini_client:
             result = gemini_client.models.generate_content(
-                model="gemini-flash-latest",
+                model="gemini-3-flash-preview",
                 contents=quiz_prompt(topic.summary[:8000]),
             )
             raw_text = (result.text or "").strip()
