@@ -10,5 +10,5 @@ pdfplumber
 python-docx
 google-generativeai==0.8.3
 transformers==4.48.0
-torch==2.5.1
+torch
 reportlab==4.2.5
