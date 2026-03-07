@@ -14,7 +14,7 @@ const Dashboard: React.FC = () => {
 
         <p className="text-lg text-indigo-100 max-w-2xl mx-auto">
           Transform dense learning material into structured understanding,
-          adaptive quizzes, and measurable mastery.
+          quizzes, and measurable mastery.
         </p>
 
         <div className="mt-8">

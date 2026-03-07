@@ -12,7 +12,7 @@ const AboutDidactAI: React.FC = () => {
         <p className="max-w-3xl mx-auto text-lg text-indigo-100">
           DidactAI is an intelligent learning assistant that combines Natural
           Language Processing and Machine Learning to convert complex academic
-          material into structured summaries, adaptive quizzes, and measurable
+          material into structured summaries, quizzes, and measurable
           learning insights.
         </p>
       </section>
@@ -32,7 +32,7 @@ const AboutDidactAI: React.FC = () => {
         <p className="text-gray-600 leading-relaxed mt-4">
           DidactAI bridges this gap by building a complete AI-powered learning
           pipeline. The system processes textual learning content, generates
-          multi-level summaries, produces adaptive quizzes, and evaluates
+          multi-level summaries, produces quizzes, and evaluates
           learning performance using analytics and AI-based insights.
         </p>
       </section>
