@@ -87,14 +87,12 @@ def create_app():
 
 
 # ✅ Run Server Correctly
+app = create_app()
 if __name__ == "__main__":
-    app = create_app()
 
-    # ✅ Create tables AFTER app is created
     with app.app_context():
         from models import User, Topic, Quiz, Question, QuizAttempt, Certificate
-
         db.create_all()
         print("✅ Database tables created successfully!")
 
-    app.run(host="127.0.0.1", port=5001, debug=True)
+    app.run(host="0.0.0.0", port=5001, debug=True)
