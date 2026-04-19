@@ -133,7 +133,7 @@ def get_user_analytics(user_id):
         accuracy = (s["correct"] / s["total"]) * 100
 
        
-        if s["total"] >= 2 and accuracy < 70:
+        if accuracy < 70:
             weak_concepts.append({
                 "concept": c,
                 "score": round(accuracy, 2),

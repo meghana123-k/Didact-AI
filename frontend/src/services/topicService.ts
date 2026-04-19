@@ -3,7 +3,7 @@ import { Topic } from "../types";
 const API_BASE_URL = "http://127.0.0.1:5001/api/topic";
 
 export const topicService = {
-  // ✅ Summarize + Save Topic (PDF/DOCX/Text)
+  //  Summarize + Save Topic (PDF/DOCX/Text)
   async summarize(formData: FormData, token: string): Promise<Topic> {
     const response = await fetch(`${API_BASE_URL}/summarize`, {
       method: "POST",
@@ -28,7 +28,7 @@ export const topicService = {
     return response.json();
   },
 
-  // ✅ Fetch Topic History for Dropdown
+  //  Fetch Topic History for Dropdown
   async getHistory(userId: string, token: string): Promise<Topic[]> {
     const response = await fetch(`${API_BASE_URL}/history/${userId}`, {
       headers: {

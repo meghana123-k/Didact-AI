@@ -21,7 +21,7 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    # ✅ Correct CORS & preflight
+    #  Correct CORS & preflight
     CORS(
         app,
         resources={
@@ -86,13 +86,13 @@ def create_app():
     return app
 
 
-# ✅ Run Server Correctly
+#  Run Server Correctly
 app = create_app()
 if __name__ == "__main__":
 
     with app.app_context():
         from models import User, Topic, Quiz, Question, QuizAttempt, Certificate
         db.create_all()
-        print("✅ Database tables created successfully!")
+        print(" Database tables created successfully!")
 
     app.run(host="0.0.0.0", port=5001, debug=True)

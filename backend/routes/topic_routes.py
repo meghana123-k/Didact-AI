@@ -19,7 +19,7 @@ load_dotenv()
 topic_bp = Blueprint("topic", __name__)
 
 # ===========================
-# ✅ Gemini Client (primary)
+#  Gemini Client (primary)
 # ===========================
 GEMINI_SUMMARY_KEY = os.getenv("GEMINI_SUMMARY_KEY")
 if not GEMINI_SUMMARY_KEY:
@@ -31,7 +31,7 @@ if GEMINI_SUMMARY_KEY and genai is not None:
     genai.configure(api_key=GEMINI_SUMMARY_KEY)
 
 # ===========================
-# ✅ HuggingFace Fallback (lightweight, safe defaults)
+#  HuggingFace Fallback (lightweight, safe defaults)
 # ===========================
 # Use a smaller FLAN-T5 variant to reduce memory pressure on local machines.
 # HF_MODEL_NAME = os.getenv("HF_SUMMARY_MODEL", "google/flan-t5-small")
@@ -47,7 +47,7 @@ def get_hf_summarizer():
 
 
 # ===========================
-# ✅ Extract Text from File
+#  Extract Text from File
 # ===========================
 def extract_text(file):
     filename = file.filename.lower()
@@ -73,7 +73,7 @@ def extract_text(file):
 
 
 # ===========================
-# ✅ Prompt Builder
+#  Prompt Builder
 # ===========================
 def build_prompt(text, mode):
     base = (
@@ -144,7 +144,7 @@ def normalize_to_word_range(text: str, min_words: int = 800, max_words: int = 15
 
 
 # ===========================
-# ✅ POST: Summarize + Save Topic
+#  POST: Summarize + Save Topic
 # ===========================
 @topic_bp.route("/summarize", methods=["POST"])
 @jwt_required()
@@ -170,7 +170,7 @@ def summarize_topic():
         return jsonify({"error": "Not enough content"}), 400
 
     # ===========================
-    # ✅ Gemini Summarization with HuggingFace Fallback
+    #  Gemini Summarization with HuggingFace Fallback
     # ===========================
     summary = None
     quota_error = False
@@ -178,7 +178,7 @@ def summarize_topic():
     if GEMINI_SUMMARY_KEY and genai is not None:
         try:
             prompt = build_prompt(extracted_text[:5000], mode)
-            model = genai.GenerativeModel("gemini-1.5-flash")
+            model = genai.GenerativeModel("gemini-flash-latest")
             response = model.generate_content(prompt)
             summary_text = response.text.strip() if response.text else ""
             summary = normalize_to_word_range(summary_text)
@@ -234,7 +234,7 @@ def summarize_topic():
             return jsonify({"error": f"Summarization failed: {str(e)}", "status": 500}), 500
 
     # ===========================
-    # ✅ Save Topic in Database
+    #  Save Topic in Database
     # ===========================
     try:
         existing_topic = Topic.query.filter_by(
@@ -251,7 +251,7 @@ def summarize_topic():
             return jsonify(existing_topic.to_dict()), 200
 
         # ===========================
-        # ✅ Create new topic
+        #  Create new topic
         # ===========================
         topic = Topic(
             user_id=user_id,
@@ -272,7 +272,7 @@ def summarize_topic():
 
 
 # ===========================
-# ✅ GET: Topic History
+#  GET: Topic History
 # ===========================
 @topic_bp.route("/history/<user_id>", methods=["GET"])
 @jwt_required()

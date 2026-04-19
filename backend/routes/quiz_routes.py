@@ -22,7 +22,7 @@ load_dotenv()
 quiz_bp = Blueprint("quiz", __name__)
 
 # ======================
-# ✅ Gemini Quiz Generator (primary)
+#  Gemini Quiz Generator (primary)
 # ======================
 GEMINI_QUIZ_KEY = os.getenv("GEMINI_QUIZ_KEY")
 if not GEMINI_QUIZ_KEY:
@@ -32,7 +32,7 @@ if GEMINI_QUIZ_KEY:
     genai.configure(api_key=GEMINI_QUIZ_KEY)
 
 # ======================
-# ✅ HuggingFace Fallback (lightweight, safe defaults)
+#  HuggingFace Fallback (lightweight, safe defaults)
 # ======================
 HF_QUIZ_MODEL_NAME = os.getenv("HF_QUIZ_MODEL", "google/flan-t5-base")
 _hf_quiz_generator = None
@@ -182,7 +182,7 @@ def validate_questions(questions_data):
 
 
 # ======================
-# ✅ Generate Quiz
+#  Generate Quiz
 # ======================
 @quiz_bp.route("/generate/<topic_id>", methods=["POST"])
 @jwt_required()
@@ -198,7 +198,7 @@ def generate_quiz(topic_id):
 
     try:
         if GEMINI_QUIZ_KEY:
-            model = genai.GenerativeModel("gemini-1.5-flash")
+            model = genai.GenerativeModel("gemini-flash-latest")
 
             result = model.generate_content(
                 quiz_prompt(topic.summary[:8000])
