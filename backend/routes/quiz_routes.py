@@ -34,7 +34,7 @@ if GEMINI_QUIZ_KEY:
 # ======================
 #  HuggingFace Fallback (lightweight, safe defaults)
 # ======================
-HF_QUIZ_MODEL_NAME = os.getenv("HF_QUIZ_MODEL", "google/flan-t5-base")
+HF_QUIZ_MODEL_NAME = os.getenv("HF_QUIZ_MODEL", "google/flan-t5-large")
 _hf_quiz_generator = None
 
 
@@ -140,11 +140,11 @@ def validate_questions(questions_data):
         return False, "Questions must be a list."
     
     # Accept exactly 15 questions
-    if len(questions_data) != 15:
-        return False, "Exactly 15 questions required."
+    if len(questions_data) < 10:
+        return False, "At least 10 questions are required."
 
     if len(questions_data) > 30:
-        questions_data = questions_data[:30]  # Trim to 30
+        questions_data = questions_data[:15]  # Trim to 30
 
     counts = {"easy": 0, "medium": 0, "hard": 0}
 
@@ -207,18 +207,21 @@ def generate_quiz(topic_id):
             raw_text = result.text.strip() if result.text else ""
             questions_data = extract_json(raw_text)
             if not questions_data:
-                return jsonify({"error": "Model returned invalid JSON", "status": 500}), 500
-
+                # return jsonify({"error": "Model returned invalid JSON", "status": 500}), 500
+                questions_data = None
             ok, msg = validate_questions(questions_data)
             if not ok:
-                return jsonify({"error": msg, "status": 500}), 500
+                # return jsonify({"error": msg, "status": 500}), 500
+                questions_data = None 
     except Exception as e:
         msg = str(e)
         if "RESOURCE_EXHAUSTED" in msg or "quota" in msg.lower():
             quota_error = True
-            print(f"Gemini quiz quota exceeded, falling back to HuggingFace: {msg}")
-        else:
-            return jsonify({"error": str(e), "status": 500}), 500
+        #     print(f"Gemini quiz quota exceeded, falling back to HuggingFace: {msg}")
+        # else:
+        #     return jsonify({"error": str(e), "status": 500}), 500
+        print("Gemini failed:", e)
+        questions_data = None
 
     if questions_data is None:
         # Gemini unavailable or quota exceeded → use HuggingFace fallback

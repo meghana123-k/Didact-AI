@@ -34,8 +34,8 @@ if GEMINI_SUMMARY_KEY and genai is not None:
 #  HuggingFace Fallback (lightweight, safe defaults)
 # ===========================
 # Use a smaller FLAN-T5 variant to reduce memory pressure on local machines.
-# HF_MODEL_NAME = os.getenv("HF_SUMMARY_MODEL", "google/flan-t5-small")
-HF_MODEL_NAME = os.getenv("HF_SUMMARY_MODEL", "sshleifer/distilbart-cnn-12-6")
+HF_MODEL_NAME = os.getenv("HF_SUMMARY_MODEL", "google/flan-t5-large")
+# HF_MODEL_NAME = os.getenv("HF_SUMMARY_MODEL", "sshleifer/distilbart-cnn-12-6")
 _hf_summarizer = None
 
 
