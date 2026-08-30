@@ -1,6 +1,6 @@
 import { Topic } from "../types";
 
-const API_BASE_URL = "http://127.0.0.1:5001/api/topic";
+const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL}/topic`;
 
 export const topicService = {
   //  Summarize + Save Topic (PDF/DOCX/Text)
@@ -19,7 +19,7 @@ export const topicService = {
         error = await response.json();
       } catch {
         throw new Error(
-          "Backend Unreachable. Ensure Flask is running on http://127.0.0.1:5001",
+          "Backend Unreachable. Please check your network connection or try again later.",
         );
       }
       throw new Error(error.error || "Summarization failed");

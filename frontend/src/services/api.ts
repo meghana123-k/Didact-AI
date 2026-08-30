@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://127.0.0.1:5001/api",
+  baseURL: import.meta.env.VITE_API_BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
@@ -28,14 +28,14 @@ api.interceptors.response.use(
     if (error.code === "ECONNABORTED") {
       console.error("Request timeout - Backend may be slow or unresponsive");
       throw new Error(
-        "Request timeout. Ensure Flask is running on http://127.0.0.1:5001",
+        "Request timeout. Please check your network connection or try again later.",
       );
     }
 
     if (!error.response) {
       console.error("Network error - Cannot reach backend:", error.message);
       throw new Error(
-        "Backend Unreachable. Ensure Flask is running on http://127.0.0.1:5001. Error: " +
+        "Backend Unreachable. Please check your network connection or try again later. Error: " +
           error.message,
       );
     }

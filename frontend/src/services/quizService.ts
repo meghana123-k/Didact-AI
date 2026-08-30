@@ -1,6 +1,6 @@
 import { Quiz, QuizAttempt } from "../types";
 
-const API_BASE_URL = "http://127.0.0.1:5001/api/quiz";
+const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL}/quiz`;
 
 export const quizService = {
   // ===============================
@@ -25,7 +25,7 @@ export const quizService = {
     } catch (err: any) {
       if (err instanceof TypeError && err.message.includes("Failed to fetch")) {
         throw new Error(
-          "Backend Unreachable. Ensure Flask is running on http://127.0.0.1:5001",
+          "Backend Unreachable. Please check your network connection or try again later.",
         );
       }
       throw err;
@@ -60,7 +60,7 @@ export const quizService = {
       } catch {
         // network / backend unreachable
         throw new Error(
-          "Backend Unreachable. Ensure Flask is running on http://127.0.0.1:5001",
+          "Backend Unreachable. Please check your network connection or try again later.",
         );
       }
 

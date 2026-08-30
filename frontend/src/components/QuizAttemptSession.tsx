@@ -33,7 +33,7 @@ const QuizAttemptSession: React.FC<QuizAttemptSessionProps> = ({
   const logIntegrity = useCallback(
     async (type: string) => {
       try {
-        await fetch("http://127.0.0.1:5001/api/integrity/log", {
+        await fetch(`${import.meta.env.VITE_API_BASE_URL}/integrity/log`, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,

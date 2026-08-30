@@ -1,7 +1,7 @@
 import axios, { AxiosError } from "axios";
-import { User } from "../types"; 
+import { User } from "../types";
 
-const API_BASE_URL = "http://127.0.0.1:5001/api/auth";
+const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL}/auth`;
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -24,7 +24,7 @@ export const authService = {
         const axiosError = err as AxiosError<any>;
         if (!axiosError.response) {
           throw new Error(
-            "Backend Unreachable. Ensure Flask is running on http://127.0.0.1:5001",
+            "Backend Unreachable. Please check your network connection or try again later.",
           );
         }
         throw new Error(axiosError.response.data.error || "Signup failed");
@@ -45,7 +45,7 @@ export const authService = {
         const axiosError = err as AxiosError<any>;
         if (!axiosError.response) {
           throw new Error(
-            "Backend Unreachable. Ensure Flask is running on http://127.0.0.1:5001",
+            "Backend Unreachable. Please check your network connection or try again later.",
           );
         }
         throw new Error(axiosError.response.data.error || "Login failed");

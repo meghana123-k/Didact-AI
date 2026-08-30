@@ -1,6 +1,6 @@
 import { Certificate } from "../types";
 
-const API_BASE_URL = "http://127.0.0.1:5001/api/certificate";
+const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL}/certificate`;
 
 export const certificateService = {
   async generate(quizId: string, token: string): Promise<any> {
