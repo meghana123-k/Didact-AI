@@ -45,6 +45,11 @@ def create_app():
     db.init_app(app)
     jwt = JWTManager(app)
 
+    with app.app_context():
+        from models import User, Topic, Quiz, Question, QuizAttempt, Certificate
+        db.create_all()
+        print("Database tables created successfully!")
+
     # Standard JWT error handlers -> clean JSON
     @jwt.unauthorized_loader
     def missing_jwt(err):
@@ -90,10 +95,5 @@ def create_app():
 #  Run Server Correctly
 app = create_app()
 if __name__ == "__main__":
-
-    with app.app_context():
-        from models import User, Topic, Quiz, Question, QuizAttempt, Certificate
-        db.create_all()
-        print(" Database tables created successfully!")
 
     app.run(host="0.0.0.0", port=5001, debug=True)
