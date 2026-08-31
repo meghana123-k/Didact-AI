@@ -198,7 +198,7 @@ def generate_quiz(topic_id):
 
     try:
         if GEMINI_QUIZ_KEY:
-            model = genai.GenerativeModel("gemini-flash-latest")
+            model = genai.GenerativeModel("gemini-3.6-flash")
 
             result = model.generate_content(
                 quiz_prompt(topic.summary[:8000])
