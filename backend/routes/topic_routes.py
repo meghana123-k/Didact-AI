@@ -7,7 +7,6 @@ import pdfplumber
 import docx
 import os
 from dotenv import load_dotenv
-from transformers import pipeline
 
 try:
     import google.generativeai as genai  # type: ignore[reportMissingImports]
@@ -25,23 +24,30 @@ GEMINI_SUMMARY_KEY = os.getenv("GEMINI_SUMMARY_KEY")
 if not GEMINI_SUMMARY_KEY:
     print("WARNING: GEMINI_SUMMARY_KEY not set. Gemini summarization will be skipped.")
 elif genai is None:
-    print("WARNING: google-generativeai is not installed. Gemini summarization will be skipped.")
+    print(
+        "WARNING: google-generativeai is not installed. Gemini summarization will be skipped."
+    )
 
 if GEMINI_SUMMARY_KEY and genai is not None:
     genai.configure(api_key=GEMINI_SUMMARY_KEY)
 
 # ===========================
-#  HuggingFace Fallback (lightweight, safe defaults)
+#  HuggingFace Fallback — DISABLED FOR NOW
 # ===========================
-# Use a smaller FLAN-T5 variant to reduce memory pressure on local machines.
-HF_MODEL_NAME = os.getenv("HF_SUMMARY_MODEL", "google/flan-t5-large")
-# HF_MODEL_NAME = os.getenv("HF_SUMMARY_MODEL", "sshleifer/distilbart-cnn-12-6")
+# Loading google/flan-t5-large (~3GB) inside a request on a small Render
+# instance is what caused the SIGKILL/OOM in your logs. Keep this off
+# until summarization is stable on Gemini alone, then reintroduce it
+# behind a background job instead of an inline fallback.
+HF_FALLBACK_ENABLED = os.getenv("HF_FALLBACK_ENABLED", "false").lower() == "true"
+HF_MODEL_NAME = os.getenv("HF_SUMMARY_MODEL", "sshleifer/distilbart-cnn-12-6")
 _hf_summarizer = None
 
 
 def get_hf_summarizer():
     global _hf_summarizer
     if _hf_summarizer is None:
+        from transformers import pipeline  # imported lazily, only if actually used
+
         _hf_summarizer = pipeline("summarization", model=HF_MODEL_NAME)
     return _hf_summarizer
 
@@ -55,9 +61,7 @@ def extract_text(file):
     if filename.endswith(".pdf"):
         with pdfplumber.open(file) as pdf:
             return "\n".join(
-                page.extract_text()
-                for page in pdf.pages
-                if page.extract_text()
+                page.extract_text() for page in pdf.pages if page.extract_text()
             )
 
     if filename.endswith(".docx"):
@@ -65,7 +69,6 @@ def extract_text(file):
         return "\n".join(p.text for p in doc.paragraphs)
 
     if filename.endswith(".txt"):
-        # Reset to start in case it's been read
         file.stream.seek(0)
         return file.read().decode("utf-8", errors="ignore")
 
@@ -114,32 +117,17 @@ def build_prompt(text, mode):
         "- Do NOT wrap the output in markdown code fences\n\n"
     )
 
-    return (
-        base
-        + mode_instr
-        + "Source material:\n"
-        + text
-        + "\n\n"
-        + markdown_rules
-    )
+    return base + mode_instr + "Source material:\n" + text + "\n\n" + markdown_rules
 
 
-
-def normalize_to_word_range(text: str, min_words: int = 800, max_words: int = 1500) -> str:
-    """
-    Post-process model output to satisfy the strict 1500–2500 word requirement.
-    If the model under-shoots, we keep the text but note it's best-effort rather than
-    fabricating extra content. If it over-shoots, we trim by words.
-    """
+def normalize_to_word_range(
+    text: str, min_words: int = 800, max_words: int = 1500
+) -> str:
     words = text.split()
     if not words:
         return text
-
     if len(words) > max_words:
         return " ".join(words[:max_words])
-
-    # If shorter than min_words, we still return but this keeps behavior deterministic.
-    # Frontend and analytics can still rely on this text.
     return text
 
 
@@ -162,7 +150,6 @@ def summarize_topic():
     file = request.files.get("file")
     extracted_text = raw_text
 
-    # Extract file content
     if file:
         extracted_text += "\n" + extract_text(file)
 
@@ -170,21 +157,25 @@ def summarize_topic():
         return jsonify({"error": "Not enough content"}), 400
 
     # ===========================
-    #  Gemini Summarization with HuggingFace Fallback
+    #  Gemini Summarization (with real timeout)
     # ===========================
     summary = None
     quota_error = False
 
     if GEMINI_SUMMARY_KEY and genai is not None:
         try:
+            print("STEP: calling gemini", flush=True)
             prompt = build_prompt(extracted_text[:5000], mode)
             model = genai.GenerativeModel("gemini-flash-latest")
-            response = model.generate_content(prompt)
+            response = model.generate_content(
+                prompt, request_options={"timeout": 30}  # <-- prevents indefinite hang
+            )
+            print("STEP: gemini responded", flush=True)
             summary_text = response.text.strip() if response.text else ""
             summary = normalize_to_word_range(summary_text)
         except Exception as e:
             msg = str(e)
-            # Detect quota/RESOURCE_EXHAUSTED and mark for fallback
+            print(f"STEP: gemini call failed/timed out: {msg}", flush=True)
             if (
                 "RESOURCE_EXHAUSTED" in msg
                 or "quota" in msg.lower()
@@ -192,78 +183,73 @@ def summarize_topic():
                 or "503" in msg
             ):
                 quota_error = True
-                print(f"Gemini unavailable, switching to HuggingFace fallback: {msg}")
-            else:
-                print(f"Gemini unexpected error, using fallback: {msg}")
 
+    # ===========================
+    #  Fallback (only if explicitly enabled)
+    # ===========================
     if summary is None:
-        # Either no Gemini client or quota exhausted → use HuggingFace locally
-        # Truncate aggressively for HF (models have token limits)
-        try:
-            # Truncate to ~1500 chars (~300–400 tokens) to stay well under limits
-            truncated_text = extracted_text[:1500]
-            prompt = f"""
-                Explain the following topic for students.
-
-                Use sections:
-                - Definition
-                - Key Properties
-                - Comparison
-
-                Topic:
-                {truncated_text}
-                """
-            hf_summarizer = get_hf_summarizer()
-            raw = hf_summarizer(
-                truncated_text,
-                max_length=300,
-                min_length=120,
-                do_sample=False
+        if not HF_FALLBACK_ENABLED:
+            return (
+                jsonify(
+                    {
+                        "error": "Summarization is temporarily unavailable. Please try again shortly.",
+                        "status": 503,
+                    }
+                ),
+                503,
             )
 
+        try:
+            truncated_text = extracted_text[:1500]
+            hf_summarizer = get_hf_summarizer()
+            raw = hf_summarizer(
+                truncated_text, max_length=300, min_length=120, do_sample=False
+            )
             summary_text = raw[0]["summary_text"].strip()
             summary = normalize_to_word_range(summary_text)
         except Exception as e:
-            # If this was a Gemini quota issue, expose that clearly
             if quota_error:
-                print(f"HuggingFace fallback failed after Gemini quota error: {e}")
-                return jsonify({
-                    "error": "Gemini quota exhausted and local fallback failed",
-                    "status": 500
-                }), 500
-            return jsonify({"error": f"Summarization failed: {str(e)}", "status": 500}), 500
+                print(
+                    f"HuggingFace fallback failed after Gemini quota error: {e}",
+                    flush=True,
+                )
+                return (
+                    jsonify(
+                        {
+                            "error": "Gemini quota exhausted and local fallback failed",
+                            "status": 500,
+                        }
+                    ),
+                    500,
+                )
+            return (
+                jsonify({"error": f"Summarization failed: {str(e)}", "status": 500}),
+                500,
+            )
 
     # ===========================
     #  Save Topic in Database
     # ===========================
     try:
         existing_topic = Topic.query.filter_by(
-            user_id=user_id,
-            title=title,
-            mode=mode
+            user_id=user_id, title=title, mode=mode
         ).first()
 
         if existing_topic:
-            # Optional: update summary instead of creating duplicate
             existing_topic.extracted_text = extracted_text
             existing_topic.summary = summary
             db.session.commit()
             return jsonify(existing_topic.to_dict()), 200
 
-        # ===========================
-        #  Create new topic
-        # ===========================
         topic = Topic(
             user_id=user_id,
             title=title,
             extracted_text=extracted_text,
             summary=summary,
-            mode=mode
+            mode=mode,
         )
-
         db.session.add(topic)
         db.session.commit()
-
         return jsonify(topic.to_dict()), 201
 
     except Exception as e:
@@ -277,14 +263,11 @@ def summarize_topic():
 @topic_bp.route("/history/<user_id>", methods=["GET"])
 @jwt_required()
 def get_topic_history(user_id):
-
     current_user = get_jwt_identity()
-
     if str(current_user) != str(user_id):
         return jsonify({"error": "Unauthorized", "status": 403}), 403
 
-    topics = Topic.query.filter_by(user_id=user_id).order_by(
-        Topic.created_at.desc()
-    ).all()
-
+    topics = (
+        Topic.query.filter_by(user_id=user_id).order_by(Topic.created_at.desc()).all()
+    )
     return jsonify([t.to_dict() for t in topics]), 200
