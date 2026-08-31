@@ -168,7 +168,7 @@ def summarize_topic():
             prompt = build_prompt(extracted_text[:5000], mode)
             model = genai.GenerativeModel("gemini-flash-latest")
             response = model.generate_content(
-                prompt, request_options={"timeout": 30}  # <-- prevents indefinite hang
+                prompt, request_options={"timeout": 90}  # <-- prevents indefinite hang
             )
             print("STEP: gemini responded", flush=True)
             summary_text = response.text.strip() if response.text else ""
