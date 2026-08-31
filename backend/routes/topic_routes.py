@@ -167,7 +167,7 @@ def summarize_topic():
             print("STEP: calling gemini", flush=True)
             prompt = build_prompt(extracted_text[:5000], mode)
             print("STEP: prompt built", flush=True)
-            model = genai.GenerativeModel("gemini-2.5-flash")
+            model = genai.GenerativeModel("gemini-3.6-flash")
             print("STEP: model initialized", flush=True)
             response = model.generate_content(
                 prompt, request_options={"timeout": 90}  # <-- prevents indefinite hang
@@ -177,7 +177,7 @@ def summarize_topic():
             summary = normalize_to_word_range(summary_text)
         except Exception as e:
             msg = str(e)
-            print(f"STEP: gemini call failed/timed out: {msg}", flush=True)
+            print(f"STEP: gemini call failed/timedout: {msg}", flush=True)
             if (
                 "RESOURCE_EXHAUSTED" in msg
                 or "quota" in msg.lower()
