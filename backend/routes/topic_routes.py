@@ -29,7 +29,7 @@ elif genai is None:
     )
 
 if GEMINI_SUMMARY_KEY and genai is not None:
-    genai.configure(api_key=GEMINI_SUMMARY_KEY)
+    genai.configure(api_key=GEMINI_SUMMARY_KEY, transport="rest")  # <-- use REST transport to avoid gRPC issues
 
 # ===========================
 #  HuggingFace Fallback — DISABLED FOR NOW
