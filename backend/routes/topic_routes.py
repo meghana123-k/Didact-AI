@@ -166,7 +166,9 @@ def summarize_topic():
         try:
             print("STEP: calling gemini", flush=True)
             prompt = build_prompt(extracted_text[:5000], mode)
-            model = genai.GenerativeModel("gemini-flash-latest")
+            print("STEP: prompt built", flush=True)
+            model = genai.GenerativeModel("gemini-2.5-flash")
+            print("STEP: model initialized", flush=True)
             response = model.generate_content(
                 prompt, request_options={"timeout": 90}  # <-- prevents indefinite hang
             )
@@ -200,6 +202,7 @@ def summarize_topic():
             )
 
         try:
+            print("STEP: initializing Hugging Face summarizer", flush=True)
             truncated_text = extracted_text[:1500]
             hf_summarizer = get_hf_summarizer()
             raw = hf_summarizer(
