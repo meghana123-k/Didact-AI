@@ -6,7 +6,7 @@ import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
 import type { Components } from "react-markdown";
-
+import CollapsibleSidebar from "./CollapsableSidebar";
 interface TopicUploadProps {
   user: User;
 }
@@ -21,7 +21,7 @@ const TopicUpload: React.FC<TopicUploadProps> = ({ user }) => {
   const [history, setHistory] = useState<Topic[]>([]);
   const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
   const [error, setError] = useState("");
-
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const token = localStorage.getItem("token") || "";
 
   useEffect(() => {
@@ -71,13 +71,13 @@ const TopicUpload: React.FC<TopicUploadProps> = ({ user }) => {
     : "";
 
   return (
-    <div className="flex h-[calc(100vh-80px)] bg-gray-50 text-gray-800">
+    <div className="flex h-[calc(100vh-80px)] bg-gray-50 text-gray-800 overflow-hidden">
       {/* Sidebar */}
-      <aside className="w-72 border-r border-gray-200 bg-white p-4 overflow-y-auto shadow-sm">
-        <h3 className="text-sm uppercase tracking-wide text-gray-400 mb-4">
-          Saved Topics
-        </h3>
-
+      <CollapsibleSidebar
+        isOpen={isSidebarOpen}
+        onToggle={() => setIsSidebarOpen((prev) => !prev)}
+        title="Saved Topics"
+      >
         {history.length === 0 && (
           <p className="text-gray-500 text-sm">No topics yet.</p>
         )}
@@ -93,10 +93,11 @@ const TopicUpload: React.FC<TopicUploadProps> = ({ user }) => {
             }`}
           >
             <p className="text-sm font-semibold truncate">{t.title}</p>
+
             <p className="text-xs text-gray-500">{t.mode}</p>
           </button>
         ))}
-      </aside>
+      </CollapsibleSidebar>
 
       {/* Main */}
       <main className="flex-1 p-10 overflow-y-auto">

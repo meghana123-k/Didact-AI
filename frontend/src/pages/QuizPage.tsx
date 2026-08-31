@@ -4,7 +4,7 @@ import { topicService } from "../services/topicService";
 import { quizService } from "../services/quizService";
 import QuizAttemptSession from "../components/QuizAttemptSession";
 import { useNavigate } from "react-router-dom";
-
+import CollapsibleSidebar from "../components/CollapsableSidebar";
 interface QuizPageProps {
   user: User;
 }
@@ -20,6 +20,7 @@ const QuizPage: React.FC<QuizPageProps> = ({ user }) => {
     null,
   );
   const [error, setError] = useState("");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const token = localStorage.getItem("token") || "";
   const navigate = useNavigate();
@@ -96,13 +97,13 @@ const QuizPage: React.FC<QuizPageProps> = ({ user }) => {
     });
   }
   return (
-    <div className="flex min-h-screen bg-gray-50 text-gray-800">
+    <div className="flex min-h-screen bg-gray-50 text-gray-800 overflow-hidden">
       {/* ================= LEFT SIDEBAR ================= */}
-      <aside className="w-80 border-r border-gray-200 bg-white p-6 overflow-y-auto">
-        <h3 className="text-sm uppercase tracking-wide text-gray-400 mb-4">
-          Attempt History
-        </h3>
-
+      <CollapsibleSidebar
+        isOpen={isSidebarOpen}
+        onToggle={() => setIsSidebarOpen((prev) => !prev)}
+        title="Attempt History"
+      >
         {attempts.length === 0 && (
           <p className="text-gray-500 text-sm">No attempts yet.</p>
         )}
@@ -133,10 +134,10 @@ const QuizPage: React.FC<QuizPageProps> = ({ user }) => {
             </div>
           </button>
         ))}
-      </aside>
+      </CollapsibleSidebar>
 
       {/* ================= MAIN PANEL ================= */}
-      <main className="flex-1 p-10 overflow-y-auto">
+      <main className="flex-1 min-w-0 p-10 overflow-y-auto">
         {/* ===== TAKING QUIZ ===== */}
         {isTakingQuiz && currentQuiz && (
           <QuizAttemptSession
